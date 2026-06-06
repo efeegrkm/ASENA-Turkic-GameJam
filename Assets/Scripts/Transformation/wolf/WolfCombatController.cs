@@ -81,7 +81,7 @@ public class WolfCombatController : MonoBehaviour
         {
             if (hit.TryGetComponent<IDamageable>(out IDamageable target))
             {
-                target.TakeDamage(meleeDamage);
+                target.TakeDamage(meleeDamage,EntityTeam.Player);
             }
         }
 
@@ -129,7 +129,7 @@ public class WolfCombatController : MonoBehaviour
         {
             if (hit.TryGetComponent<IDamageable>(out IDamageable target))
             {
-                target.TakeDamage(dashAoEDamage);
+                target.TakeDamage(dashAoEDamage, EntityTeam.Player);
             }
         }
 
