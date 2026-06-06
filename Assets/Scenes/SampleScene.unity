@@ -1915,6 +1915,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7934858914192945227, guid: 8a93cf2ccc762914d8ce940f327d54b1, type: 3}
+      propertyPath: m_NavMeshData
+      value: 
+      objectReference: {fileID: 23800000, guid: 09eace632f2034b40b0a933c21af90e2, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3173,11 +3177,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   activeCamera: {fileID: 330585545}
   gravity: -9.81
-  hasCharacterController: 1
   moveSpeed: 7
   rotationSpeed: 10
   characterRadius: 0.5
   characterHeight: 2
+  wolfHeight: 1.2
+  formOffset: {x: 0, y: 0, z: 0.5}
   aimMoveSpeed: 3
   bodyRotationThreshold: 15
 --- !u!1 &1722205325633312530
