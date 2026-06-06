@@ -8,27 +8,27 @@ public class WolfCombatController : MonoBehaviour
     [SerializeField] private float meleeDamage = 25f;
     [SerializeField] private float meleeRange = 2f;
     [SerializeField] private float meleeAnimDuration = 0.8f;
-    [SerializeField] private Transform attackPoint; // Aðýz/Pençe hizasý
+    [SerializeField] private Transform attackPoint;
     [SerializeField] private LayerMask enemyLayer;
 
     [Header("Dash (Atýlma) Settings")]
     [SerializeField] private float dashForce = 15f;
-    [SerializeField] private float dashDuration = 0.3f;
+    [SerializeField] private float dashDuration = 0.4f;
     [SerializeField] private float dashAoERadius = 4f;
     [SerializeField] private float dashAoEDamage = 40f;
     [SerializeField] private float dashCooldown = 3f;
 
     [Header("Inputs")]
-    [SerializeField] private InputActionReference attackAction; // Sol Týk
-    [SerializeField] private InputActionReference dashAction;   // Shift
+    [SerializeField] private InputActionReference attackAction;
+    [SerializeField] private InputActionReference dashAction;
 
     private bool isWolf = false;
-    private bool isActionLocked = false; // Saldýrý/Atýlma yaparken tekrar basmayý önler
+    private bool isActionLocked = false;
     private float lastDashTime = -10f;
 
-    private CharacterController characterController; // Sadece dash sýrasýndaki fiziksel itme için gerekli
+    private CharacterController characterController;
 
-    private void Awake() => characterController = GetComponent<CharacterController>();
+    private void Awake() => characterController = GetComponentInParent<CharacterController>();
 
     private void OnEnable()
     {
@@ -55,11 +55,10 @@ public class WolfCombatController : MonoBehaviour
     }
 
     private void UpdateForm(bool wolfState) => isWolf = wolfState;
-    private void LockActionsTemporarily(bool becomingWolf) => isActionLocked = true; // Dönüþüm bitince FormManager OnFormChanged atacak, o da baþka yeri tetikleyecek ama burada actionlarý elle açmalýyýz
+    private void LockActionsTemporarily(bool becomingWolf) => isActionLocked = true;
 
     private void Update()
     {
-        // Dönüþüm bittiðinde kilitleri açmak için ufak bir kontrol
         if (isActionLocked && !isWolf) isActionLocked = false;
     }
 
@@ -75,7 +74,6 @@ public class WolfCombatController : MonoBehaviour
         GameEvents.OnWolfMeleeStarted();
         GameEvents.OnPlayOneShotSFX("WolfBite");
 
-        // Hasar tespiti (Animasyonun ortasýnda hasar vurmasý için ufak bir bekleme eklenebilir)
         yield return new WaitForSeconds(meleeAnimDuration / 2f);
 
         Collider[] hits = Physics.OverlapSphere(attackPoint.position, meleeRange, enemyLayer);
@@ -98,6 +96,7 @@ public class WolfCombatController : MonoBehaviour
         StartCoroutine(DashRoutine());
     }
 
+    // HATA 3 ÇÖZÜMÜ: Dash sadece yerde kaymak yerine zýplayýp ileri atýlmaya (Leap) çevrildi
     private IEnumerator DashRoutine()
     {
         isActionLocked = true;
@@ -108,16 +107,23 @@ public class WolfCombatController : MonoBehaviour
         Vector3 dashDirection = transform.forward;
         float elapsed = 0f;
 
+        float verticalVelocity = 6f; // Y Ekseni yukarý zýplama kuvveti
+        float gravity = -20f;        // Havadaki düþüþ kuvveti
+
         while (elapsed < dashDuration)
         {
+            verticalVelocity += gravity * Time.deltaTime;
+
+            // X-Z Ekseninde ileri ivme + Y Ekseninde Parabolik hareket
+            Vector3 currentMove = (dashDirection * dashForce) + (Vector3.up * verticalVelocity);
+
             if (characterController != null)
-                characterController.Move(dashDirection * (dashForce * Time.deltaTime));
+                characterController.Move(currentMove * Time.deltaTime);
 
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        // Dash bittiðinde Alan Hasarý (AoE) patlamasý
         Collider[] hits = Physics.OverlapSphere(transform.position, dashAoERadius, enemyLayer);
         foreach (var hit in hits)
         {

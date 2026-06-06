@@ -30,7 +30,7 @@ public class BabyManager : MonoBehaviour
         GameEvents.GetBabyTransform += GetMyTransform;
         GameEvents.OnTryNurseRequested += HandleNurseRequest;
         GameEvents.OnTryPickupRequested += HandlePickupRequest;
-        GameEvents.OnTryDragRequested += HandleDragRequest; // Yeni Event
+        GameEvents.OnTryDragRequested += HandleDragRequest;
         GameEvents.OnTryDropRequested += HandleDropRequest;
     }
 
@@ -66,11 +66,7 @@ public class BabyManager : MonoBehaviour
             GameEvents.OnBabyCrying(false);
         }
 
-        // HATA 2 ÇÖZÜMÜ: Kurt puseti aðzýnda çevirirken bebek "fýldýr fýldýr" devrilmesin diye dik tutma kilidi
-        if (currentState == BabyState.CarriedInMouth && transform.parent != null)
-        {
-            transform.rotation = Quaternion.Euler(0f, transform.parent.eulerAngles.y, 0f);
-        }
+        // Fýldýr fýldýr dönme kontrolünü sildik çünkü SetParent(true) ile obje kendi fiziðini koruyacak.
     }
 
     private void HandlePickupRequest(Transform mountPoint)
@@ -95,13 +91,13 @@ public class BabyManager : MonoBehaviour
         isTransitioning = false;
     }
 
-    // AÐZA ALMA METODU (Rotasyon bozmadan)
+    // HATA 4 ÇÖZÜMÜ: Kurdun puseti tuttuðu yer. Transform ellenmiyor.
     private void HandleDragRequest(Transform mouthPoint)
     {
         if (isTransitioning || currentState != BabyState.Dropped) return;
 
-        transform.SetParent(mouthPoint);
-        transform.localPosition = Vector3.zero; // Sadece pozisyon olarak aðza yapýþýr
+        // Parent yap, ancak dünya üzerindeki pozisyonunu ve rotasyonunu (true parametresi ile) koru.
+        transform.SetParent(mouthPoint, true);
 
         currentState = BabyState.CarriedInMouth;
         GameEvents.OnBabyStateChanged(currentState);
@@ -111,17 +107,14 @@ public class BabyManager : MonoBehaviour
     {
         if (isTransitioning || currentState == BabyState.Dropped) return;
 
-        // Eðer sýrttaysa animasyonla býrak
         if (currentState == BabyState.CarriedOnBack)
         {
             StartCoroutine(DropRoutine(dropPosition));
         }
         else if (currentState == BabyState.CarriedInMouth)
         {
-            // Kurdun aðzýndan olduðu gibi (animasyonsuz) in
-            transform.SetParent(null);
-            transform.position = dropPosition;
-            transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+            // HATA 4 ÇÖZÜMÜ: Sadece parent'ý kaldýr. Pozisyon/Rotasyon oynama.
+            transform.SetParent(null, true);
 
             currentState = BabyState.Dropped;
             GameEvents.OnBabyStateChanged(currentState);

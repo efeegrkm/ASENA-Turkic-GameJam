@@ -35,7 +35,6 @@ public class WolfBabyDragController : MonoBehaviour
     {
         if (!isWolf || currentBabyState != BabyState.Dropped) return;
 
-        // Mesafe Kontrolü: Kurt bebeðe yeterince yakýn mý?
         if (GameEvents.GetBabyTransform != null)
         {
             Transform baby = GameEvents.GetBabyTransform();
@@ -58,7 +57,7 @@ public class WolfBabyDragController : MonoBehaviour
         isDragging = false;
         GameEvents.OnWolfDragStateChanged(false);
 
-        // HATA 4 ÇÖZÜMÜ: Bebeði tam olarak aðzýn olduðu pozisyona býrak
-        GameEvents.OnTryDropRequested(mouthMountPoint.position);
+        // HATA 4 ÇÖZÜMÜ: BabyManager'ýn býrakma iþleminde artýk parametre dikkate alýnmýyor.
+        GameEvents.OnTryDropRequested(Vector3.zero);
     }
 }

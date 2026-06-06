@@ -42,14 +42,13 @@ public class FormManager : MonoBehaviour
     {
         if (isTransforming) return;
 
-        // KURAL 1: Sýrtta bebek varken kurda dönüþülemez
         if (!isWolf && currentBabyState == BabyState.CarriedOnBack)
         {
             GameEvents.OnShowHint("Sýrtýnda Oðuz varken Asena form deðiþtiremez! Önce onu yere býrak.", 4f);
             return;
         }
 
-        // KURAL 2: Kurt aðzýnda puseti tutarken insana dönüþemez (HATA 1 ÇÖZÜMÜ)
+        // HATA 1 ÇÖZÜMÜ: Kurt formunda aðzýnda puset varken insana dönüþemez.
         if (isWolf && currentBabyState == BabyState.CarriedInMouth)
         {
             GameEvents.OnShowHint("Aðzýnda puset varken insana dönüþemezsin! Önce G tuþunu býrak.", 4f);
