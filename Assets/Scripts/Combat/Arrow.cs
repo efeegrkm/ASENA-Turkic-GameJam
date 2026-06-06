@@ -4,6 +4,10 @@ using UnityEngine.Events;
 [RequireComponent(typeof(Rigidbody))]
 public class Arrow : MonoBehaviour
 {
+    [Header("Combat Settings")]
+    [Tooltip("Okun hedefe vuracaðý hasar miktarý")]
+    [SerializeField] private float damageAmount = 30f;
+
     [Header("Stick Settings")]
     [Tooltip("Okun çarptýðý yüzeye ne kadar gömüleceði (metre)")]
     [SerializeField] private float stickDepth = 0.25f;
@@ -41,12 +45,22 @@ public class Arrow : MonoBehaviour
     {
         if (isStuck) return;
 
+        // 1. ADIM: Çarptýðýmýz objede bir can sistemi (HealthManager) var mý kontrol et
+        if (collision.gameObject.TryGetComponent<IDamageable>(out IDamageable target))
+        {
+            // Varsa, Oyuncu (Player) takýmý adýna hasarý vur!
+            target.TakeDamage(damageAmount, EntityTeam.Player);
+            
+            // GameEvents.OnPlayOneShotSFX("ArrowHitFlesh");
+        }
+
         if (((1 << collision.gameObject.layer) & stickableLayers) != 0)
         {
             StickToTarget(collision);
         }
         else
         {
+            // Saplanýlamaz bir yere (örneðin demir kalkan) çarptýysa sekme sesi çal
             GameEvents.OnPlayOneShotSFX("ArrowDeflect");
         }
     }
@@ -70,6 +84,9 @@ public class Arrow : MonoBehaviour
             interactableComponent.enabled = true;
         }
 
-        GameEvents.OnPlayOneShotSFX("ArrowHitWood");
+        if (collision.gameObject.GetComponent<IDamageable>() == null)
+        {
+            GameEvents.OnPlayOneShotSFX("ArrowHitWood");
+        }
     }
 }
