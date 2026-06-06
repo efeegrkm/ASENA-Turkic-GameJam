@@ -5,7 +5,7 @@ public class WolfBabyDragController : MonoBehaviour
 {
     [Header("Drag Inputs")]
     [Tooltip("Puseti tutmak için basýlacak tuþ (E - Interact)")]
-    [SerializeField] private InputActionReference grabAction;
+    [SerializeField] private InputActionReference dragAction;
     [Tooltip("Puseti býrakmak için basýlacak tuþ (G - Drop)")]
     [SerializeField] private InputActionReference dropAction;
 
@@ -19,22 +19,39 @@ public class WolfBabyDragController : MonoBehaviour
 
     private void OnEnable()
     {
-        GameEvents.OnFormChanged += (state) => isWolf = state;
-        GameEvents.OnBabyStateChanged += (state) => currentBabyState = state;
+        GameEvents.OnFormChanged += UpdateForm;
+        GameEvents.OnBabyStateChanged += HandleBabyStateChanged;
 
-        // ÇÖZÜM: 'performed' yerine 'started' kullanýyoruz. 
-        // Böylece tuþa basýldýðý o ilk milisaniyede komut çalýþýr, basýlý tutmaya gerek kalmaz.
-        grabAction.action.started += OnGrabPerformed;
+        if (dragAction != null) dragAction.action.Enable();
+        if (dropAction != null) dropAction.action.Enable();
+
+        dragAction.action.started += OnDragStarted;
         dropAction.action.started += OnDropPerformed;
     }
 
     private void OnDisable()
     {
-        grabAction.action.started -= OnGrabPerformed;
+        GameEvents.OnFormChanged -= UpdateForm;
+        GameEvents.OnBabyStateChanged -= HandleBabyStateChanged;
+
+        dragAction.action.started -= OnDragStarted;
         dropAction.action.started -= OnDropPerformed;
     }
 
-    private void OnGrabPerformed(InputAction.CallbackContext context)
+    private void UpdateForm(bool wolfState) => isWolf = wolfState;
+
+    private void HandleBabyStateChanged(BabyState state)
+    {
+        currentBabyState = state;
+
+        if (isDragging && state == BabyState.Stolen)
+        {
+            isDragging = false;
+            GameEvents.OnWolfDragStateChanged(false);
+        }
+    }
+
+    private void OnDragStarted(InputAction.CallbackContext context)
     {
         if (!isWolf || currentBabyState != BabyState.Dropped || isDragging) return;
 
@@ -60,6 +77,6 @@ public class WolfBabyDragController : MonoBehaviour
         isDragging = false;
         GameEvents.OnWolfDragStateChanged(false);
 
-        GameEvents.OnTryDropRequested(Vector3.zero);
+        GameEvents.OnTryDropRequested(transform.position);
     }
 }

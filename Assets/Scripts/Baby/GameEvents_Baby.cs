@@ -1,7 +1,8 @@
 using System;
 using UnityEngine;
 
-public enum BabyState { Dropped, CarriedOnBack, CarriedInMouth }
+// ÇÖZÜM 1: 'Stolen' (Çalýndý) durumunu ekledik.
+public enum BabyState { Dropped, CarriedOnBack, CarriedInMouth, Stolen }
 
 public static partial class GameEvents
 {
@@ -10,9 +11,11 @@ public static partial class GameEvents
     public static Action<bool> OnBabyCrying = delegate { };
 
     public static Action<Vector3> OnTryNurseRequested = delegate { };
-    public static Action<Transform> OnTryPickupRequested = delegate { }; // Sýrta almak için
-    public static Action<Transform> OnTryDragRequested = delegate { };   // Aðýza almak (sürüklemek) için
+    public static Action<Transform> OnTryPickupRequested = delegate { };
+    public static Action<Transform> OnTryDragRequested = delegate { };
     public static Action<Vector3> OnTryDropRequested = delegate { };
+
+    public static Action<Transform> OnBabyStolen = delegate { };
 
     public static Func<Transform> GetBabyTransform;
 

@@ -32,6 +32,9 @@ public class WolfCombatController : MonoBehaviour
 
     private void OnEnable()
     {
+        // HATA 1 ÇÖZÜMÜ: Script (Kurt Modeli) her açýldýðýnda kilidi ZORLA temizle!
+        isActionLocked = false;
+
         GameEvents.OnFormChanged += UpdateForm;
         GameEvents.OnFormChangeStarted += LockActionsTemporarily;
 
@@ -47,9 +50,6 @@ public class WolfCombatController : MonoBehaviour
         GameEvents.OnFormChanged -= UpdateForm;
         GameEvents.OnFormChangeStarted -= LockActionsTemporarily;
 
-        if (attackAction != null) attackAction.action.Disable();
-        if (dashAction != null) dashAction.action.Disable();
-
         attackAction.action.performed -= TryMeleeAttack;
         dashAction.action.performed -= TryDash;
     }
@@ -57,10 +57,7 @@ public class WolfCombatController : MonoBehaviour
     private void UpdateForm(bool wolfState) => isWolf = wolfState;
     private void LockActionsTemporarily(bool becomingWolf) => isActionLocked = true;
 
-    private void Update()
-    {
-        if (isActionLocked && !isWolf) isActionLocked = false;
-    }
+    // NOT: Bozuk mantýk içeren Update fonksiyonu tamamen SÝLÝNDÝ.
 
     private void TryMeleeAttack(InputAction.CallbackContext context)
     {
@@ -81,7 +78,7 @@ public class WolfCombatController : MonoBehaviour
         {
             if (hit.TryGetComponent<IDamageable>(out IDamageable target))
             {
-                target.TakeDamage(meleeDamage,EntityTeam.Player);
+                target.TakeDamage(meleeDamage, EntityTeam.Player);
             }
         }
 
@@ -96,7 +93,6 @@ public class WolfCombatController : MonoBehaviour
         StartCoroutine(DashRoutine());
     }
 
-    // HATA 3 ÇÖZÜMÜ: Dash sadece yerde kaymak yerine zýplayýp ileri atýlmaya (Leap) çevrildi
     private IEnumerator DashRoutine()
     {
         isActionLocked = true;
@@ -107,14 +103,13 @@ public class WolfCombatController : MonoBehaviour
         Vector3 dashDirection = transform.forward;
         float elapsed = 0f;
 
-        float verticalVelocity = 6f; // Y Ekseni yukarý zýplama kuvveti
-        float gravity = -20f;        // Havadaki düþüþ kuvveti
+        float verticalVelocity = 6f;
+        float gravity = -20f;
 
         while (elapsed < dashDuration)
         {
             verticalVelocity += gravity * Time.deltaTime;
 
-            // X-Z Ekseninde ileri ivme + Y Ekseninde Parabolik hareket
             Vector3 currentMove = (dashDirection * dashForce) + (Vector3.up * verticalVelocity);
 
             if (characterController != null)

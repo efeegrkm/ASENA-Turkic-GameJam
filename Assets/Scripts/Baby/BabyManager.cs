@@ -22,8 +22,24 @@ public class BabyManager : MonoBehaviour
     [SerializeField] private float dropAnimDuration = 1.0f;
     [SerializeField] private float nurseAnimDuration = 3.0f;
 
+    [Header("Ground Snapping (Zemin Algýlama)")]
+    [Tooltip("Haritadaki engebeli zeminleri (Terrain, Kaya, Platform) algýlamak için kullanýlan katman")]
+    [SerializeField] private LayerMask groundLayer;
+
     private bool isCrying = false;
     private bool isTransitioning = false;
+
+    // HATA 3 ÇÖZÜMÜ: Bebeðin 3D modelinin merkezi (pivot) ile zemin arasýndaki mesafeyi tutacak
+    private float meshPivotOffset = 0f;
+
+    private void Start()
+    {
+        // Oyun baþlar baþlamaz altýndaki zemine bir ýþýn atýp pivot hatasýný (gömülme payýný) hesaplýyoruz
+        if (Physics.Raycast(transform.position + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 5f, groundLayer))
+        {
+            meshPivotOffset = transform.position.y - hit.point.y;
+        }
+    }
 
     private void OnEnable()
     {
@@ -32,6 +48,8 @@ public class BabyManager : MonoBehaviour
         GameEvents.OnTryPickupRequested += HandlePickupRequest;
         GameEvents.OnTryDragRequested += HandleDragRequest;
         GameEvents.OnTryDropRequested += HandleDropRequest;
+
+        GameEvents.OnBabyStolen += HandleStolenRequest;
     }
 
     private void OnDisable()
@@ -41,6 +59,8 @@ public class BabyManager : MonoBehaviour
         GameEvents.OnTryPickupRequested -= HandlePickupRequest;
         GameEvents.OnTryDragRequested -= HandleDragRequest;
         GameEvents.OnTryDropRequested -= HandleDropRequest;
+
+        GameEvents.OnBabyStolen -= HandleStolenRequest;
     }
 
     private Transform GetMyTransform() => transform;
@@ -65,8 +85,15 @@ public class BabyManager : MonoBehaviour
             isCrying = false;
             GameEvents.OnBabyCrying(false);
         }
+    }
 
-        // Fýldýr fýldýr dönme kontrolünü sildik çünkü SetParent(true) ile obje kendi fiziðini koruyacak.
+    private void HandleStolenRequest(Transform enemyHand)
+    {
+        transform.SetParent(enemyHand);
+        transform.localPosition = Vector3.zero;
+
+        currentState = BabyState.Stolen;
+        GameEvents.OnBabyStateChanged(currentState);
     }
 
     private void HandlePickupRequest(Transform mountPoint)
@@ -91,12 +118,10 @@ public class BabyManager : MonoBehaviour
         isTransitioning = false;
     }
 
-    // HATA 4 ÇÖZÜMÜ: Kurdun puseti tuttuðu yer. Transform ellenmiyor.
     private void HandleDragRequest(Transform mouthPoint)
     {
         if (isTransitioning || currentState != BabyState.Dropped) return;
 
-        // Parent yap, ancak dünya üzerindeki pozisyonunu ve rotasyonunu (true parametresi ile) koru.
         transform.SetParent(mouthPoint, true);
 
         currentState = BabyState.CarriedInMouth;
@@ -107,14 +132,23 @@ public class BabyManager : MonoBehaviour
     {
         if (isTransitioning || currentState == BabyState.Dropped) return;
 
+        Vector3 finalDropPos = dropPosition;
+
+        if (Physics.Raycast(dropPosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 20f, groundLayer))
+        {
+            // HATA 3 ÇÖZÜMÜ: Zeminin yüksekliðine, bebeðin pivot payýný (gömülmemesi için gereken payý) ekliyoruz!
+            finalDropPos.y = hit.point.y + meshPivotOffset;
+        }
+
         if (currentState == BabyState.CarriedOnBack)
         {
-            StartCoroutine(DropRoutine(dropPosition));
+            StartCoroutine(DropRoutine(finalDropPos));
         }
-        else if (currentState == BabyState.CarriedInMouth)
+        else if (currentState == BabyState.CarriedInMouth || currentState == BabyState.Stolen)
         {
-            // HATA 4 ÇÖZÜMÜ: Sadece parent'ý kaldýr. Pozisyon/Rotasyon oynama.
             transform.SetParent(null, true);
+            transform.position = finalDropPos;
+            transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
             currentState = BabyState.Dropped;
             GameEvents.OnBabyStateChanged(currentState);
@@ -139,7 +173,7 @@ public class BabyManager : MonoBehaviour
 
     private void HandleNurseRequest(Vector3 playerPosition)
     {
-        if (isTransitioning || currentState == BabyState.CarriedInMouth) return;
+        if (isTransitioning || currentState == BabyState.CarriedInMouth || currentState == BabyState.Stolen) return;
 
         if (currentState == BabyState.Dropped)
         {

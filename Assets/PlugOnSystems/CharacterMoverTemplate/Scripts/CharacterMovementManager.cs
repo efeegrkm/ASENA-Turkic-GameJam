@@ -13,7 +13,11 @@ public class CharacterMovementManager : MonoBehaviour
 
     [Header("Player Movement Rotation")]
     [SerializeField] private float moveSpeed = 7f;
-    [SerializeField] private float rotationSpeed = 10f;
+    // ÇÖZÜM: Dönüş hızlarını formlara göre ayırıyoruz
+    [Tooltip("İnsan formunun kendi ekseninde dönme çevikliği")]
+    [SerializeField] private float humanRotationSpeed = 10f;
+    [Tooltip("Kurt formunun kendi ekseninde dönme hantallığı (Düşük DPI hissiyatı)")]
+    [SerializeField] private float wolfRotationSpeed = 4f;
 
     [Header("Player Physical Attributes")]
     [SerializeField] private float characterRadius = 0.5f;
@@ -38,12 +42,18 @@ public class CharacterMovementManager : MonoBehaviour
     private float speedMultiplier = 1.0f;
     private bool isDraggingBaby = false;
 
+    // Çalışma anında aktif olan dönüş hızını tutacak değişken
+    private float currentRotationSpeed;
+
     private void Awake()
     {
         SetActiveCamera();
         SetCharacterController();
 
         hasCharacterController = characterController != null;
+
+        // Oyun başında insan formunun hızıyla başla
+        currentRotationSpeed = humanRotationSpeed;
 
         playerInput = new();
         playerInput.Player.Enable();
@@ -94,10 +104,14 @@ public class CharacterMovementManager : MonoBehaviour
     private void LockMovementTemp(bool isWolf) => isMovementLocked = true;
     private void LockMovementTempD() => isMovementLocked = true;
     private void UnlockMovement(bool isWolf) => isMovementLocked = false;
+
     private void ChangeForm(bool isWolf)
     {
         UnlockMovement(isWolf);
-        
+
+        // ÇÖZÜM: Form değiştiği an fare (dönüş) hassasiyetini güncelle!
+        currentRotationSpeed = isWolf ? wolfRotationSpeed : humanRotationSpeed;
+
         if (hasCharacterController)
         {
             if (isWolf)
@@ -140,7 +154,7 @@ public class CharacterMovementManager : MonoBehaviour
 
         if (isDraggingBaby)
         {
-            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f); // W (�leri) iptal, sadece S, A, D �al���r
+            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f); // W (İleri) iptal, sadece S, A, D çalışır
         }
 
         Vector3 camForward = activeCamera.transform.forward;
@@ -150,7 +164,6 @@ public class CharacterMovementManager : MonoBehaviour
         camForward.Normalize();
         camRight.Normalize();
 
-        // ��Z�M: Puset �ekerken de hareket y�n�n� kameraya ba�lad�k
         Vector3 movementDir = (camForward * yMoveInput) + (camRight * xMoveInput);
 
         float currentSpeed = isAiming ? aimMoveSpeed : moveSpeed;
@@ -168,14 +181,13 @@ public class CharacterMovementManager : MonoBehaviour
             GameEvents.OnStoppedMoving();
         }
 
-        // ROTASYON Y�NET�M�
+        // ROTASYON YÖNETİMİ (Sabit rotationSpeed yerine artık dinamik olan currentRotationSpeed devrede)
         if (isDraggingBaby)
         {
-            // ��Z�M: Mouse kontrol� geri geldi. Kurt puseti �ekerken y�z�n� her zaman kameran�n bakt��� y�ne d�ner.
             if (camForward != Vector3.zero)
             {
                 Quaternion targetRot = Quaternion.LookRotation(camForward);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * currentRotationSpeed);
             }
         }
         else if (isAiming)
@@ -184,13 +196,13 @@ public class CharacterMovementManager : MonoBehaviour
             if (angleDiff > bodyRotationThreshold || movementDir != Vector3.zero)
             {
                 Quaternion targetRot = Quaternion.LookRotation(camForward);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed * 1.5f);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * currentRotationSpeed * 1.5f);
             }
         }
         else if (movementDir != Vector3.zero)
         {
             Quaternion targetRot = Quaternion.LookRotation(movementDir);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * currentRotationSpeed);
         }
     }
 
