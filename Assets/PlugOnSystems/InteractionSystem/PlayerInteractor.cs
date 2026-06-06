@@ -8,7 +8,7 @@ public class PlayerInteractor : MonoBehaviour
     [SerializeField] private LayerMask interactLayer;
 
     [Header("Raycast Spread Settings")]
-    [Tooltip("Merkezdeki ana raycast'in etrafýna atýlacak 4 yardýmcý raycast'in merkezden uzaklýðý")]
+    [Tooltip("Raycastlerin merkezden ne kadar uzaða açýlacaðý")]
     [SerializeField] private float raySpacing = 0.5f;
 
     [Tooltip("Input Action Asset'inizdeki etkileþim aksiyonunu buraya sürükleyin.")]
@@ -16,6 +16,8 @@ public class PlayerInteractor : MonoBehaviour
 
     [Header("References")]
     [SerializeField] private Transform cameraTransform;
+    [Tooltip("Kamera ile oyuncu arasýndaki objeleri yoksaymak için Oyuncunun (Player) Transform'unu buraya sürükleyin.")]
+    [SerializeField] private Transform playerTransform;
 
     private IInteractable currentInteractable;
 
@@ -36,13 +38,22 @@ public class PlayerInteractor : MonoBehaviour
 
     private void CheckInteraction()
     {
+        Vector3 up = cameraTransform.up;
+        Vector3 right = cameraTransform.right;
+
+        // ÝSTENÝLEN DÝZÝLÝM: 3 Ortada (Üçgen) + 4 Kenarlarda = 7 Iþýn
         Vector3[] rayOffsets = new Vector3[]
         {
-            Vector3.zero,                    
-            cameraTransform.right * raySpacing,       
-            -cameraTransform.right * raySpacing,        
-            cameraTransform.up * raySpacing,    
-            -cameraTransform.up * raySpacing 
+            // --- Ýç Kýsým (Ortadaki Üçgen) ---
+            up * (raySpacing * 0.25f),                                      // Merkez Üst
+            (-up - right).normalized * (raySpacing * 0.25f),                // Merkez Sol Alt
+            (-up + right).normalized * (raySpacing * 0.25f),                // Merkez Sað Alt
+
+            // --- Dýþ Kýsým (4 Kenar) ---
+            (up + right).normalized * raySpacing,                           // Sað Üst
+            (up - right).normalized * raySpacing,                           // Sol Üst
+            (-up + right).normalized * raySpacing,                          // Sað Alt
+            (-up - right).normalized * raySpacing                           // Sol Alt
         };
 
         IInteractable foundInteractable = null;
@@ -51,16 +62,35 @@ public class PlayerInteractor : MonoBehaviour
         foreach (Vector3 offset in rayOffsets)
         {
             Ray ray = new Ray(cameraTransform.position + offset, cameraTransform.forward);
-            RaycastHit hit;
-
-            if (Physics.Raycast(ray, out hit, interactRange, interactLayer))
+            
+            if (Physics.Raycast(ray, out RaycastHit hit, interactRange, interactLayer))
             {
-                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
-                if (interactable != null)
+                bool isValidHit = true;
+
+                // KAMERA VE OYUNCU ARASINA GÝRENLERÝ ENGELLEME MANTIÐI
+                if (playerTransform != null)
                 {
-                    foundInteractable = interactable;
-                    debugRayColor = Color.green;
-                    break;
+                    // Çarpýlan noktanýn ve oyuncunun kameranýn ileri eksenindeki derinliklerini ölçüyoruz
+                    float hitDepth = Vector3.Dot(hit.point - cameraTransform.position, cameraTransform.forward);
+                    float playerDepth = Vector3.Dot(playerTransform.position - cameraTransform.position, cameraTransform.forward);
+
+                    // Eðer çarpýlan obje oyuncudan daha gerideyse (kamera ile oyuncu arasýndaysa)
+                    // Ayaktaki objeleri rahat almak için -0.5f'lik küçük bir hata payý býrakýyoruz
+                    if (hitDepth < playerDepth - 0.5f)
+                    {
+                        isValidHit = false; 
+                    }
+                }
+
+                if (isValidHit)
+                {
+                    IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+                    if (interactable != null)
+                    {
+                        foundInteractable = interactable;
+                        debugRayColor = Color.green;
+                        break; // Ýlk geçerli etkileþimi bulduðunda döngüden çýk
+                    }
                 }
             }
         }
@@ -74,8 +104,6 @@ public class PlayerInteractor : MonoBehaviour
                 currentInteractable.OnFocus();
             }
 
-            // Open press to interact
-
             if (interactAction.action.WasPressedThisFrame())
             {
                 foundInteractable.Interact();
@@ -86,6 +114,7 @@ public class PlayerInteractor : MonoBehaviour
             ClearInteractable(); 
         }
 
+        // Scene ekranýnda test edebilmen için ýþýnlarý çizer
         foreach (Vector3 offset in rayOffsets)
         {
             Debug.DrawRay(cameraTransform.position + offset, cameraTransform.forward * interactRange, debugRayColor);
@@ -106,13 +135,18 @@ public class PlayerInteractor : MonoBehaviour
         if (cameraTransform == null) return;
         Gizmos.color = Color.yellow;
 
+        Vector3 up = cameraTransform.up;
+        Vector3 right = cameraTransform.right;
+
         Vector3[] rayOffsets = new Vector3[]
         {
-            Vector3.zero,
-            cameraTransform.right * raySpacing,
-            -cameraTransform.right * raySpacing,
-            cameraTransform.up * raySpacing,
-            -cameraTransform.up * raySpacing
+            up * (raySpacing * 0.25f),
+            (-up - right).normalized * (raySpacing * 0.25f),
+            (-up + right).normalized * (raySpacing * 0.25f),
+            (up + right).normalized * raySpacing,
+            (up - right).normalized * raySpacing,
+            (-up + right).normalized * raySpacing,
+            (-up - right).normalized * raySpacing
         };
 
         foreach (Vector3 offset in rayOffsets)

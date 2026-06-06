@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class BowController : MonoBehaviour
 {
+    
     [Header("Bow Settings")]
     [SerializeField] private int currentArrows = 5;
     [SerializeField] private float maxChargeTime = 1.0f;
@@ -29,7 +30,7 @@ public class BowController : MonoBehaviour
 
     private bool hasShownCancelHint = false;
     private bool hasShownPickupHint = false;
-
+    private BabyState currentBabyState = BabyState.Dropped;
     private void OnEnable()
     {
         if (aimAndShootAction != null) aimAndShootAction.action.Enable();
@@ -38,6 +39,7 @@ public class BowController : MonoBehaviour
         aimAndShootAction.action.started += OnDrawStarted;
         aimAndShootAction.action.canceled += OnDrawReleased;
         cancelAction.action.performed += OnCancelAim;
+        GameEvents.OnBabyStateChanged += UpdateBabyState;
     }
 
     private void OnDisable()
@@ -48,6 +50,7 @@ public class BowController : MonoBehaviour
         aimAndShootAction.action.started -= OnDrawStarted;
         aimAndShootAction.action.canceled -= OnDrawReleased;
         cancelAction.action.performed -= OnCancelAim;
+        GameEvents.OnBabyStateChanged -= UpdateBabyState;
     }
 
     private void Start()
@@ -65,6 +68,16 @@ public class BowController : MonoBehaviour
         }
     }
 
+    private void UpdateBabyState(BabyState state)
+    {
+        currentBabyState = state;
+
+        if (isDrawing && currentBabyState == BabyState.CarriedOnBack)
+        {
+            CancelAimingProcess();
+            GameEvents.OnBowDrawCanceled();
+        }
+    }
     private void UpdateAimAndBowRotation()
     {
         Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
@@ -86,7 +99,16 @@ public class BowController : MonoBehaviour
 
     private void OnDrawStarted(InputAction.CallbackContext context)
     {
-        if (currentArrows <= 0) return;
+        if (currentArrows <= 0)
+        {
+            GameEvents.OnShowHint("Ok kalmadý...", 3f);
+            return;
+        }
+        if (currentBabyState == BabyState.CarriedOnBack)
+        {
+            GameEvents.OnShowHint("Oðuzu taþýrken yay kullanamazsýn! Bebeði býrakmak için G tuþuna bas", 3f);
+            return;
+        }
 
         isDrawing = true;
         drawTimer = 0f;

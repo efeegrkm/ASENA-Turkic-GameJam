@@ -36,7 +36,7 @@ public class InteractableObject : MonoBehaviour, IInteractable
             if (focusTimer >= focusHoldTime)
             {
                 onFocusHold?.Invoke();
-                holdTriggered = true; 
+                holdTriggered = true;
             }
         }
     }
@@ -58,6 +58,9 @@ public class InteractableObject : MonoBehaviour, IInteractable
         isFocused = true;
         focusTimer = 0f;
         holdTriggered = false;
+
+        // Ekranda ipucu sistemimiz aracýlýðýyla etkileþim metnini 2 saniyeliðine gösteriyoruz
+        GameEvents.OnShowHint(promptText, 2.0f);
 
         onFocus?.Invoke();
     }
