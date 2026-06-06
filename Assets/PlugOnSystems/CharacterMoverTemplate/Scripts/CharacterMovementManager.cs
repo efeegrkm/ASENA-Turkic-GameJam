@@ -31,6 +31,9 @@ public class CharacterMovementManager : MonoBehaviour
 
     private Vector3 velocity = new(0f, -2f, 0f);
 
+    private bool isMovementLocked = false;
+    private float speedMultiplier = 1.0f;
+
     private void Awake()
     {
         SetActiveCamera();
@@ -60,10 +63,25 @@ public class CharacterMovementManager : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.OnAimStateChanged += HandleAimState;
+
+        GameEvents.OnFormChangeStarted += LockMovementTemp;
+        GameEvents.OnFormChanged += UnlockMovement;
+
+        GameEvents.OnWolfDashStarted += LockMovementTempD;
+        GameEvents.OnWolfDashCompleted += UnlockMovement;
+
+        GameEvents.OnWolfDragStateChanged += HandleDragSpeed;
     }
     private void OnDisable()
     {
         GameEvents.OnAimStateChanged -= HandleAimState;
+
+        GameEvents.OnFormChangeStarted -= LockMovementTemp;
+        GameEvents.OnFormChanged -= UnlockMovement;
+
+        GameEvents.OnWolfDashStarted -= LockMovementTempD;
+        GameEvents.OnWolfDashCompleted -= UnlockMovement;
+        GameEvents.OnWolfDragStateChanged -= HandleDragSpeed;
     }
     private void HandleAimState(bool state)
     {
@@ -74,6 +92,16 @@ public class CharacterMovementManager : MonoBehaviour
     {
         playerInput.Player.Move.performed += OnMovementPerformed;
         playerInput.Player.Move.canceled += OnMovementCanceled;
+    }
+
+    private void LockMovementTemp(bool isWolf) => isMovementLocked = true;
+    private void LockMovementTempD() => isMovementLocked = true;
+    private void UnlockMovement(bool isWolf) => isMovementLocked = false;
+    private void UnlockMovement() => isMovementLocked = false;
+
+    private void HandleDragSpeed(bool isDragging)
+    {
+        speedMultiplier = isDragging ? 0.3f : 1.0f;
     }
 
     private void OnMovementPerformed(InputAction.CallbackContext context)
@@ -116,7 +144,7 @@ public class CharacterMovementManager : MonoBehaviour
         {
             GameEvents.OnMoved();
             if (hasCharacterController)
-                characterController.Move(Time.deltaTime * currentSpeed * movementDir);
+                characterController.Move(Time.deltaTime * currentSpeed * speedMultiplier * movementDir);
             else
                 transform.Translate(Time.deltaTime * currentSpeed * movementDir, Space.World);
         }
