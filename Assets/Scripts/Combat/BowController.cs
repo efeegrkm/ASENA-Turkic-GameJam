@@ -33,7 +33,9 @@ public class BowController : MonoBehaviour
 
     private void OnEnable()
     {
-        // NOT: .action.Enable() satýrlarý kaldýrýldý. Ana obje üzerindeki PlayerInput bileþeni zaten haritayý yönetiyor.
+        if (aimAndShootAction != null) aimAndShootAction.action.Enable();
+        if (cancelAction != null) cancelAction.action.Enable();
+
         aimAndShootAction.action.started += OnDrawStarted;
         aimAndShootAction.action.canceled += OnDrawReleased;
         cancelAction.action.performed += OnCancelAim;
@@ -42,10 +44,8 @@ public class BowController : MonoBehaviour
 
     private void OnDisable()
     {
-        // ÇÖZÜM 1: Obje deaktif edilirken (Kurta dönüþürken) aktif olan yay germe durumunu tamamen sýfýrla!
         CancelAimingProcess();
 
-        // ÇÖZÜM 2: .action.Disable() satýrlarý kaldýrýldý. Böylece aksiyon küresel olarak felç edilmiyor.
         aimAndShootAction.action.started -= OnDrawStarted;
         aimAndShootAction.action.canceled -= OnDrawReleased;
         cancelAction.action.performed -= OnCancelAim;

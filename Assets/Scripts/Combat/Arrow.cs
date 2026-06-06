@@ -45,13 +45,9 @@ public class Arrow : MonoBehaviour
     {
         if (isStuck) return;
 
-        // 1. ADIM: Çarptýðýmýz objede bir can sistemi (HealthManager) var mý kontrol et
         if (collision.gameObject.TryGetComponent<IDamageable>(out IDamageable target))
         {
-            // Varsa, Oyuncu (Player) takýmý adýna hasarý vur!
             target.TakeDamage(damageAmount, EntityTeam.Player);
-            
-            // GameEvents.OnPlayOneShotSFX("ArrowHitFlesh");
         }
 
         if (((1 << collision.gameObject.layer) & stickableLayers) != 0)
@@ -60,7 +56,6 @@ public class Arrow : MonoBehaviour
         }
         else
         {
-            // Saplanýlamaz bir yere (örneðin demir kalkan) çarptýysa sekme sesi çal
             GameEvents.OnPlayOneShotSFX("ArrowDeflect");
         }
     }
@@ -69,14 +64,14 @@ public class Arrow : MonoBehaviour
     {
         isStuck = true;
 
-        rb.isKinematic = true;
+        // ÇÖZÜM 4: Konsoldaki sarý uyarýnýn sebebi burasýydý. 
+        // ÖNCE hýzlar sýfýrlanmalý, SONRA isKinematic true yapýlmalý!
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
 
         transform.position += transform.forward * stickDepth;
-
         col.enabled = false;
-
         transform.SetParent(collision.transform);
 
         if (interactableComponent != null)

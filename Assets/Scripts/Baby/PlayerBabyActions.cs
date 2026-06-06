@@ -10,8 +10,8 @@ public class PlayerBabyActions : MonoBehaviour
     [SerializeField] private Vector3 dropOffset = new Vector3(0, 0, 1f);
 
     [Header("Input Actions")]
-    [SerializeField] private InputActionReference nurseAction; //'F' Tuþu
-    [SerializeField] private InputActionReference dropAction;  //'G' veya 'Q' Tuþu
+    [SerializeField] private InputActionReference nurseAction;
+    [SerializeField] private InputActionReference dropAction;
 
     private BabyState currentBabyState = BabyState.Dropped;
     private bool isActionLocked = false;
@@ -20,11 +20,13 @@ public class PlayerBabyActions : MonoBehaviour
     {
         GameEvents.OnBabyStateChanged += UpdateBabyState;
 
-        // Animasyonlar oynarken inputlarý/hareketi kitlemek için
         GameEvents.OnBabyNurseStarted += LockActions;
         GameEvents.OnBabyNurseCompleted += UnlockActions;
         GameEvents.OnBabyPickupStarted += LockActions;
         GameEvents.OnBabyDropStarted += LockActions;
+
+        if (nurseAction != null) nurseAction.action.Enable();
+        if (dropAction != null) dropAction.action.Enable();
 
         nurseAction.action.performed += TryNurse;
         dropAction.action.performed += TryDrop;
@@ -39,6 +41,7 @@ public class PlayerBabyActions : MonoBehaviour
         GameEvents.OnBabyPickupStarted -= LockActions;
         GameEvents.OnBabyDropStarted -= LockActions;
 
+        // BURADAKÝ .Disable() SATIRLARI SÝLÝNDÝ (G Tuþu artýk global olarak ölmeyecek)
         nurseAction.action.performed -= TryNurse;
         dropAction.action.performed -= TryDrop;
     }
@@ -46,7 +49,7 @@ public class PlayerBabyActions : MonoBehaviour
     private void UpdateBabyState(BabyState newState)
     {
         currentBabyState = newState;
-        UnlockActions(); // Animasyon bittiðinde ve state deðiþtiðinde kilidi aç
+        UnlockActions();
     }
 
     private void LockActions() => isActionLocked = true;
@@ -55,8 +58,6 @@ public class PlayerBabyActions : MonoBehaviour
     private void TryNurse(InputAction.CallbackContext context)
     {
         if (!isActiveAndEnabled || isActionLocked) return;
-
-        // Oyuncu F'ye bastýðýnda global sisteme pozisyonunu yollayarak "Emzirmeyi dene" der.
         GameEvents.OnTryNurseRequested(transform.position);
     }
 
@@ -68,13 +69,9 @@ public class PlayerBabyActions : MonoBehaviour
         GameEvents.OnTryDropRequested(targetDropPos);
     }
 
-    // Bebeði yerden almak için Interact sistemin bunu tetikleyecek
     public void TryPickup()
     {
-        // HATA ÇÖZÜMÜ: Eðer bu obje (Ýnsan Formu) kapalýysa, dýþarýdan gelen etkileþimleri reddet!
         if (!isActiveAndEnabled || isActionLocked || currentBabyState != BabyState.Dropped) return;
-
-        // Sýrt montaj noktasýný gönderiyoruz ki bebek oraya snaplensin
         GameEvents.OnTryPickupRequested(backMountPoint);
     }
 }

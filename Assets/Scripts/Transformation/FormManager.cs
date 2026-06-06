@@ -25,12 +25,17 @@ public class FormManager : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.OnBabyStateChanged += UpdateBabyState;
+
+        if (transformAction != null) transformAction.action.Enable();
+
         transformAction.action.performed += TryTransform;
     }
 
     private void OnDisable()
     {
         GameEvents.OnBabyStateChanged -= UpdateBabyState;
+
+        // .Disable() SÝLÝNDÝ
         transformAction.action.performed -= TryTransform;
     }
 
