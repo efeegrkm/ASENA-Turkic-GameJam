@@ -9,7 +9,7 @@ public class CharacterMovementManager : MonoBehaviour
 
     [Header("CharacterController Related Variables")]
     [SerializeField] private float gravity = -9.81f;
-    [SerializeField] private bool hasCharacterController;
+    private bool hasCharacterController;
 
     [Header("Player Movement Rotation")]
     [SerializeField] private float moveSpeed = 7f;
@@ -18,6 +18,10 @@ public class CharacterMovementManager : MonoBehaviour
     [Header("Player Physical Attributes")]
     [SerializeField] private float characterRadius = 0.5f;
     [SerializeField] private float characterHeight = 1f;
+    [SerializeField] private float wolfHeight = 1.5f;
+
+    [Header("Wolf/Character Form")]
+    [SerializeField] private Vector3 formOffset = new(0f, 0f, 0.5f);
 
     [Header("Aiming Settings")]
     [SerializeField] private float aimMoveSpeed = 3f;
@@ -38,6 +42,8 @@ public class CharacterMovementManager : MonoBehaviour
     {
         SetActiveCamera();
         SetCharacterController();
+
+        hasCharacterController = characterController != null;
 
         playerInput = new();
         playerInput.Player.Enable();
@@ -62,7 +68,7 @@ public class CharacterMovementManager : MonoBehaviour
     {
         GameEvents.OnAimStateChanged += HandleAimState;
         GameEvents.OnFormChangeStarted += LockMovementTemp;
-        GameEvents.OnFormChanged += UnlockMovement;
+        GameEvents.OnFormChanged += ChangeForm;
         GameEvents.OnWolfDashStarted += LockMovementTempD;
         GameEvents.OnWolfDashCompleted += UnlockMovement;
         GameEvents.OnWolfDragStateChanged += HandleDragSpeed;
@@ -75,7 +81,7 @@ public class CharacterMovementManager : MonoBehaviour
     {
         GameEvents.OnAimStateChanged -= HandleAimState;
         GameEvents.OnFormChangeStarted -= LockMovementTemp;
-        GameEvents.OnFormChanged -= UnlockMovement;
+        GameEvents.OnFormChanged -= ChangeForm;
         GameEvents.OnWolfDashStarted -= LockMovementTempD;
         GameEvents.OnWolfDashCompleted -= UnlockMovement;
         GameEvents.OnWolfDragStateChanged -= HandleDragSpeed;
@@ -88,6 +94,26 @@ public class CharacterMovementManager : MonoBehaviour
     private void LockMovementTemp(bool isWolf) => isMovementLocked = true;
     private void LockMovementTempD() => isMovementLocked = true;
     private void UnlockMovement(bool isWolf) => isMovementLocked = false;
+    private void ChangeForm(bool isWolf)
+    {
+        UnlockMovement(isWolf);
+        
+        if (hasCharacterController)
+        {
+            if (isWolf)
+            {
+                characterController.height = wolfHeight;
+                characterController.center = new(characterController.center.x, wolfHeight / 2, characterController.center.z);
+                characterController.center += formOffset;
+            }
+            else
+            {
+                characterController.height = characterHeight;
+                characterController.center = new(characterController.center.x, characterHeight / 2, characterController.center.z);
+                characterController.center -= formOffset;
+            }
+        }
+    }
     private void UnlockMovement() => isMovementLocked = false;
 
     private void HandleDragSpeed(bool isDragging)
@@ -114,7 +140,7 @@ public class CharacterMovementManager : MonoBehaviour
 
         if (isDraggingBaby)
         {
-            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f); // W (Ýleri) iptal, sadece S, A, D çalýþýr
+            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f); // W (ï¿½leri) iptal, sadece S, A, D ï¿½alï¿½ï¿½ï¿½r
         }
 
         Vector3 camForward = activeCamera.transform.forward;
@@ -124,7 +150,7 @@ public class CharacterMovementManager : MonoBehaviour
         camForward.Normalize();
         camRight.Normalize();
 
-        // ÇÖZÜM: Puset çekerken de hareket yönünü kameraya baðladýk
+        // ï¿½ï¿½Zï¿½M: Puset ï¿½ekerken de hareket yï¿½nï¿½nï¿½ kameraya baï¿½ladï¿½k
         Vector3 movementDir = (camForward * yMoveInput) + (camRight * xMoveInput);
 
         float currentSpeed = isAiming ? aimMoveSpeed : moveSpeed;
@@ -142,10 +168,10 @@ public class CharacterMovementManager : MonoBehaviour
             GameEvents.OnStoppedMoving();
         }
 
-        // ROTASYON YÖNETÝMÝ
+        // ROTASYON Yï¿½NETï¿½Mï¿½
         if (isDraggingBaby)
         {
-            // ÇÖZÜM: Mouse kontrolü geri geldi. Kurt puseti çekerken yüzünü her zaman kameranýn baktýðý yöne döner.
+            // ï¿½ï¿½Zï¿½M: Mouse kontrolï¿½ geri geldi. Kurt puseti ï¿½ekerken yï¿½zï¿½nï¿½ her zaman kameranï¿½n baktï¿½ï¿½ï¿½ yï¿½ne dï¿½ner.
             if (camForward != Vector3.zero)
             {
                 Quaternion targetRot = Quaternion.LookRotation(camForward);
