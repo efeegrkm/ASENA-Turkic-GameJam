@@ -3,17 +3,16 @@ using UnityEngine.InputSystem;
 
 public class BowController : MonoBehaviour
 {
-    
     [Header("Bow Settings")]
     [SerializeField] private int currentArrows = 5;
     [SerializeField] private float maxChargeTime = 1.0f;
     [SerializeField] private float minChargeTime = 0.2f;
 
     [Header("Aim & Raycast Settings")]
-    [SerializeField] private Camera mainCamera; 
-    [SerializeField] private Transform weaponHolder; 
-    [SerializeField] private float aimDistance = 100f; 
-    [SerializeField] private LayerMask aimMask; 
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private Transform weaponHolder;
+    [SerializeField] private float aimDistance = 100f;
+    [SerializeField] private LayerMask aimMask;
 
     [Header("Projectile Settings")]
     [SerializeField] private GameObject arrowPrefab;
@@ -21,8 +20,8 @@ public class BowController : MonoBehaviour
     [SerializeField] private float maxShootForce = 40f;
 
     [Header("Input Dependencies")]
-    [SerializeField] private InputActionReference aimAndShootAction; 
-    [SerializeField] private InputActionReference cancelAction; 
+    [SerializeField] private InputActionReference aimAndShootAction;
+    [SerializeField] private InputActionReference cancelAction;
 
     private bool isDrawing = false;
     private float drawTimer = 0f;
@@ -31,11 +30,10 @@ public class BowController : MonoBehaviour
     private bool hasShownCancelHint = false;
     private bool hasShownPickupHint = false;
     private BabyState currentBabyState = BabyState.Dropped;
+
     private void OnEnable()
     {
-        if (aimAndShootAction != null) aimAndShootAction.action.Enable();
-        if (cancelAction != null) cancelAction.action.Enable();
-
+        // NOT: .action.Enable() satýrlarý kaldýrýldý. Ana obje üzerindeki PlayerInput bileþeni zaten haritayý yönetiyor.
         aimAndShootAction.action.started += OnDrawStarted;
         aimAndShootAction.action.canceled += OnDrawReleased;
         cancelAction.action.performed += OnCancelAim;
@@ -44,9 +42,10 @@ public class BowController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (aimAndShootAction != null) aimAndShootAction.action.Disable();
-        if (cancelAction != null) cancelAction.action.Disable();
+        // ÇÖZÜM 1: Obje deaktif edilirken (Kurta dönüþürken) aktif olan yay germe durumunu tamamen sýfýrla!
+        CancelAimingProcess();
 
+        // ÇÖZÜM 2: .action.Disable() satýrlarý kaldýrýldý. Böylece aksiyon küresel olarak felç edilmiyor.
         aimAndShootAction.action.started -= OnDrawStarted;
         aimAndShootAction.action.canceled -= OnDrawReleased;
         cancelAction.action.performed -= OnCancelAim;
@@ -78,6 +77,7 @@ public class BowController : MonoBehaviour
             GameEvents.OnBowDrawCanceled();
         }
     }
+
     private void UpdateAimAndBowRotation()
     {
         Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
@@ -88,7 +88,7 @@ public class BowController : MonoBehaviour
         }
         else
         {
-            currentAimPoint = ray.GetPoint(aimDistance); 
+            currentAimPoint = ray.GetPoint(aimDistance);
         }
 
         if (weaponHolder != null)
@@ -113,7 +113,7 @@ public class BowController : MonoBehaviour
         isDrawing = true;
         drawTimer = 0f;
 
-        GameEvents.OnAimStateChanged(true); 
+        GameEvents.OnAimStateChanged(true);
         GameEvents.OnBowDrawStarted();
         GameEvents.OnCrosshairVisibilityChanged(true);
         GameEvents.OnToggleAimCamera(true);
@@ -154,7 +154,7 @@ public class BowController : MonoBehaviour
     {
         isDrawing = false;
 
-        GameEvents.OnAimStateChanged(false); 
+        GameEvents.OnAimStateChanged(false);
         GameEvents.OnCrosshairVisibilityChanged(false);
         GameEvents.OnToggleAimCamera(false);
 

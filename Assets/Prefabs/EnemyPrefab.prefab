@@ -104,6 +104,7 @@ GameObject:
   - component: {fileID: 1182972201793115872}
   - component: {fileID: 7045166696538638668}
   - component: {fileID: 3977867643955088743}
+  - component: {fileID: 7106933932792689939}
   m_Layer: 0
   m_Name: EnemyPrefab
   m_TagString: Untagged
@@ -160,7 +161,7 @@ NavMeshAgent:
   m_Height: 1.8
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 3
+  m_ObstacleAvoidanceType: 1
 --- !u!114 &1182972201793115872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -210,3 +211,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
   target: {fileID: 0}
+--- !u!114 &7106933932792689939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5833661997601862619}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e52c13c6cc732cc4cae42d6da07d039e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthManager
+  maxHealth: 100
+  team: 1
+  onTakeDamage:
+    m_PersistentCalls:
+      m_Calls: []
+  onDie:
+    m_PersistentCalls:
+      m_Calls: []
