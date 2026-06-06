@@ -8,4 +8,5 @@ public static partial class GameEvents
     public static Action OnStartDefaultOrbit = delegate { };
     public static Action<GameObject, float, float, float> OnStartCustomOrbit = delegate { };
     public static Action<bool> OnSetCursorState = delegate { };
+    public static Action<bool> OnToggleAimCamera = delegate { };
 }

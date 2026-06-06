@@ -19,6 +19,11 @@ public class CharacterMovementManager : MonoBehaviour
     [SerializeField] private float characterRadius = 0.5f;
     [SerializeField] private float characterHeight = 1f;
 
+    [Header("Aiming Settings")]
+    [SerializeField] private float aimMoveSpeed = 3f; // Niþan alýrkenki yavaþ hýz
+    [SerializeField] private float bodyRotationThreshold = 15f; // Gövdenin dönmesi için gereken kamera açýsý
+    private bool isAiming = false;
+
     private PlayerInput playerInput;
     private CharacterController characterController;
 
@@ -51,6 +56,18 @@ public class CharacterMovementManager : MonoBehaviour
             characterController.center = new(characterController.center.x, characterHeight / 2, characterController.center.z);
             characterController.height = characterHeight;
         }
+    }
+    private void OnEnable()
+    {
+        GameEvents.OnAimStateChanged += HandleAimState;
+    }
+    private void OnDisable()
+    {
+        GameEvents.OnAimStateChanged -= HandleAimState;
+    }
+    private void HandleAimState(bool state)
+    {
+        isAiming = state;
     }
 
     void Start()
@@ -88,22 +105,39 @@ public class CharacterMovementManager : MonoBehaviour
 
         camForward.y = 0f;
         camRight.y = 0f;
-
         camForward.Normalize();
         camRight.Normalize();
 
         Vector3 movementDir = (camForward * yMoveInput) + (camRight * xMoveInput);
 
+        float currentSpeed = isAiming ? aimMoveSpeed : moveSpeed;
+
         if (movementDir != Vector3.zero)
         {
-            // DEÐÝÞÝKLÝK: Local event yerine GameEvents tetikleniyor
             GameEvents.OnMoved();
-            Move(hasCharacterController, movementDir);
+            if (hasCharacterController)
+                characterController.Move(Time.deltaTime * currentSpeed * movementDir);
+            else
+                transform.Translate(Time.deltaTime * currentSpeed * movementDir, Space.World);
         }
         else
         {
-            // DEÐÝÞÝKLÝK: Local event yerine GameEvents tetikleniyor
             GameEvents.OnStoppedMoving();
+        }
+
+        if (isAiming)
+        {
+            float angleDiff = Vector3.Angle(transform.forward, camForward);
+            if (angleDiff > bodyRotationThreshold || movementDir != Vector3.zero)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(camForward);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed * 1.5f);
+            }
+        }
+        else if (movementDir != Vector3.zero)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(movementDir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.deltaTime * rotationSpeed);
         }
     }
 
