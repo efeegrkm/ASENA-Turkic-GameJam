@@ -19,6 +19,11 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private Transform[] zone2SpawnPoints;
     [SerializeField] private Transform[] zone3SpawnPoints;
 
+    [Header("Zones")]
+    [SerializeField] private GameObject zone1;
+    [SerializeField] private GameObject zone2;
+    [SerializeField] private GameObject zone3;
+
     //State machine to handle spawning and resting periods
     private enum SpawnerState {Spawning, Resting}
     private SpawnerState currentState = SpawnerState.Spawning;
@@ -124,6 +129,7 @@ public class EnemySpawner : MonoBehaviour
 
     private Transform GetRandomPointForCurrentZone()
     {
+        //Debug.Log($"Getting spawn point for Zone {currentZone}");
         Transform[] activeList = currentZone == 1 ? zone1SpawnPoints : (currentZone == 2 ? zone2SpawnPoints : zone3SpawnPoints);
         
         if (activeList.Length == 0)
@@ -131,7 +137,9 @@ public class EnemySpawner : MonoBehaviour
             Debug.LogError($"No spawn points found for Zone {currentZone}!");
             return null;
         }
-        return activeList[Random.Range(0, activeList.Length)];
+        int randomIndex = Random.Range(0, activeList.Length);
+        Debug.Log($"Selected spawn point {activeList[randomIndex].name} for Zone {currentZone}");
+        return activeList[randomIndex];
     }
 
     private EnemyData ChooseEnemyByDifficulty()

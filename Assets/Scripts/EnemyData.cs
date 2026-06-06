@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[CreateAssetMenu(fileName = "New Enemy Data", menuName = "Enemy Data")]
 public class EnemyData : ScriptableObject
 {
     public string enemyName; // Düşman adı (örneğin: "Kurt", "Ayı")
@@ -8,5 +9,4 @@ public class EnemyData : ScriptableObject
     public int health; // Düşmanın sağlığı
     public float speed; // Düşmanın hareket hızı
     public int damage; // Düşmanın vereceği hasar
-    public int scoreValue; // Düşman öldürüldüğünde oyuncuya verilecek puan
 }
