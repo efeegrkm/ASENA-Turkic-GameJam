@@ -2548,7 +2548,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1737288663}
   m_Layer: 0
-  m_Name: Enviroment
+  m_Name: Environment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3679,7 +3679,7 @@ GameObject:
   - component: {fileID: 8163840268546263420}
   - component: {fileID: 8163840268546263422}
   m_Layer: 0
-  m_Name: MainCharacther
+  m_Name: MainCharacter
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
