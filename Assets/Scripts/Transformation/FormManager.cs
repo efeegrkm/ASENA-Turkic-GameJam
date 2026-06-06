@@ -25,14 +25,12 @@ public class FormManager : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.OnBabyStateChanged += UpdateBabyState;
-        if (transformAction != null) transformAction.action.Enable();
         transformAction.action.performed += TryTransform;
     }
 
     private void OnDisable()
     {
         GameEvents.OnBabyStateChanged -= UpdateBabyState;
-        if (transformAction != null) transformAction.action.Disable();
         transformAction.action.performed -= TryTransform;
     }
 
@@ -48,7 +46,6 @@ public class FormManager : MonoBehaviour
             return;
         }
 
-        // HATA 1 ÇÖZÜMÜ: Kurt formunda aðzýnda puset varken insana dönüþemez.
         if (isWolf && currentBabyState == BabyState.CarriedInMouth)
         {
             GameEvents.OnShowHint("Aðzýnda puset varken insana dönüþemezsin! Önce G tuþunu býrak.", 4f);

@@ -32,7 +32,7 @@ public class CharacterMovementManager : MonoBehaviour
 
     private bool isMovementLocked = false;
     private float speedMultiplier = 1.0f;
-    private bool isDraggingBaby = false; // Dragging state'i için eklendi
+    private bool isDraggingBaby = false;
 
     private void Awake()
     {
@@ -112,10 +112,9 @@ public class CharacterMovementManager : MonoBehaviour
         float xMoveInput = inputMoveVector.x;
         float yMoveInput = inputMoveVector.y;
 
-        // HATA 2 ÇÖZÜMÜ: Kurt puseti çekerken sadece geri (S) veya yanlara (A-D) gidebilir. Ýleri (W) iptal.
         if (isDraggingBaby)
         {
-            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f);
+            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f); // W (Ýleri) iptal, sadece S, A, D çalýþýr
         }
 
         Vector3 camForward = activeCamera.transform.forward;
@@ -125,7 +124,9 @@ public class CharacterMovementManager : MonoBehaviour
         camForward.Normalize();
         camRight.Normalize();
 
+        // ÇÖZÜM: Puset çekerken de hareket yönünü kameraya baðladýk
         Vector3 movementDir = (camForward * yMoveInput) + (camRight * xMoveInput);
+
         float currentSpeed = isAiming ? aimMoveSpeed : moveSpeed;
 
         if (movementDir != Vector3.zero)
@@ -144,7 +145,7 @@ public class CharacterMovementManager : MonoBehaviour
         // ROTASYON YÖNETÝMÝ
         if (isDraggingBaby)
         {
-            // Kurt geri geri puset çekerken kameranýn baktýðý yöne (pusete) dönük kalýr.
+            // ÇÖZÜM: Mouse kontrolü geri geldi. Kurt puseti çekerken yüzünü her zaman kameranýn baktýðý yöne döner.
             if (camForward != Vector3.zero)
             {
                 Quaternion targetRot = Quaternion.LookRotation(camForward);

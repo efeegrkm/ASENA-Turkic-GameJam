@@ -14,7 +14,7 @@ public class PlayerBabyActions : MonoBehaviour
     [SerializeField] private InputActionReference dropAction;  //'G' veya 'Q' Tuþu
 
     private BabyState currentBabyState = BabyState.Dropped;
-    private bool isActionLocked = false; 
+    private bool isActionLocked = false;
 
     private void OnEnable()
     {
@@ -25,9 +25,6 @@ public class PlayerBabyActions : MonoBehaviour
         GameEvents.OnBabyNurseCompleted += UnlockActions;
         GameEvents.OnBabyPickupStarted += LockActions;
         GameEvents.OnBabyDropStarted += LockActions;
-
-        if (nurseAction != null) nurseAction.action.Enable();
-        if (dropAction != null) dropAction.action.Enable();
 
         nurseAction.action.performed += TryNurse;
         dropAction.action.performed += TryDrop;
@@ -41,9 +38,6 @@ public class PlayerBabyActions : MonoBehaviour
         GameEvents.OnBabyNurseCompleted -= UnlockActions;
         GameEvents.OnBabyPickupStarted -= LockActions;
         GameEvents.OnBabyDropStarted -= LockActions;
-
-        if (nurseAction != null) nurseAction.action.Disable();
-        if (dropAction != null) dropAction.action.Disable();
 
         nurseAction.action.performed -= TryNurse;
         dropAction.action.performed -= TryDrop;
@@ -60,7 +54,7 @@ public class PlayerBabyActions : MonoBehaviour
 
     private void TryNurse(InputAction.CallbackContext context)
     {
-        if (isActionLocked) return;
+        if (!isActiveAndEnabled || isActionLocked) return;
 
         // Oyuncu F'ye bastýðýnda global sisteme pozisyonunu yollayarak "Emzirmeyi dene" der.
         GameEvents.OnTryNurseRequested(transform.position);
@@ -68,7 +62,7 @@ public class PlayerBabyActions : MonoBehaviour
 
     private void TryDrop(InputAction.CallbackContext context)
     {
-        if (isActionLocked || currentBabyState == BabyState.Dropped) return;
+        if (!isActiveAndEnabled || isActionLocked || currentBabyState == BabyState.Dropped) return;
 
         Vector3 targetDropPos = transform.position + transform.TransformDirection(dropOffset);
         GameEvents.OnTryDropRequested(targetDropPos);
@@ -77,7 +71,8 @@ public class PlayerBabyActions : MonoBehaviour
     // Bebeði yerden almak için Interact sistemin bunu tetikleyecek
     public void TryPickup()
     {
-        if (isActionLocked || currentBabyState != BabyState.Dropped) return;
+        // HATA ÇÖZÜMÜ: Eðer bu obje (Ýnsan Formu) kapalýysa, dýþarýdan gelen etkileþimleri reddet!
+        if (!isActiveAndEnabled || isActionLocked || currentBabyState != BabyState.Dropped) return;
 
         // Sýrt montaj noktasýný gönderiyoruz ki bebek oraya snaplensin
         GameEvents.OnTryPickupRequested(backMountPoint);

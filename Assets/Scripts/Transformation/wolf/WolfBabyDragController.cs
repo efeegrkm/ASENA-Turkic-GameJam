@@ -3,8 +3,13 @@ using UnityEngine.InputSystem;
 
 public class WolfBabyDragController : MonoBehaviour
 {
-    [Header("Drag Settings")]
-    [SerializeField] private InputActionReference dragAction;
+    [Header("Drag Inputs")]
+    [Tooltip("Puseti tutmak için basýlacak tuþ (E - Interact)")]
+    [SerializeField] private InputActionReference grabAction;
+    [Tooltip("Puseti býrakmak için basýlacak tuþ (G - Drop)")]
+    [SerializeField] private InputActionReference dropAction;
+
+    [Header("References")]
     [SerializeField] private Transform mouthMountPoint;
     [SerializeField] private float grabRange = 2.5f;
 
@@ -17,23 +22,21 @@ public class WolfBabyDragController : MonoBehaviour
         GameEvents.OnFormChanged += (state) => isWolf = state;
         GameEvents.OnBabyStateChanged += (state) => currentBabyState = state;
 
-        if (dragAction != null) dragAction.action.Enable();
-
-        dragAction.action.started += OnDragStarted;
-        dragAction.action.canceled += OnDragCanceled;
+        // ÇÖZÜM: 'performed' yerine 'started' kullanýyoruz. 
+        // Böylece tuþa basýldýðý o ilk milisaniyede komut çalýþýr, basýlý tutmaya gerek kalmaz.
+        grabAction.action.started += OnGrabPerformed;
+        dropAction.action.started += OnDropPerformed;
     }
 
     private void OnDisable()
     {
-        if (dragAction != null) dragAction.action.Disable();
-
-        dragAction.action.started -= OnDragStarted;
-        dragAction.action.canceled -= OnDragCanceled;
+        grabAction.action.started -= OnGrabPerformed;
+        dropAction.action.started -= OnDropPerformed;
     }
 
-    private void OnDragStarted(InputAction.CallbackContext context)
+    private void OnGrabPerformed(InputAction.CallbackContext context)
     {
-        if (!isWolf || currentBabyState != BabyState.Dropped) return;
+        if (!isWolf || currentBabyState != BabyState.Dropped || isDragging) return;
 
         if (GameEvents.GetBabyTransform != null)
         {
@@ -50,14 +53,13 @@ public class WolfBabyDragController : MonoBehaviour
         GameEvents.OnWolfDragStateChanged(true);
     }
 
-    private void OnDragCanceled(InputAction.CallbackContext context)
+    private void OnDropPerformed(InputAction.CallbackContext context)
     {
         if (!isDragging) return;
 
         isDragging = false;
         GameEvents.OnWolfDragStateChanged(false);
 
-        // HATA 4 ÇÖZÜMÜ: BabyManager'ýn býrakma iþleminde artýk parametre dikkate alýnmýyor.
         GameEvents.OnTryDropRequested(Vector3.zero);
     }
 }
