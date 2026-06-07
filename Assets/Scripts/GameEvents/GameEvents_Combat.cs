@@ -1,5 +1,6 @@
 
 using System;
+using UnityEngine;
 
 public static partial class GameEvents
 {
@@ -7,5 +8,6 @@ public static partial class GameEvents
     public static Action OnBowDrawCanceled = delegate { }; 
     public static Action<float> OnBowShooted = delegate { }; 
     public static Action<int> OnArrowCountChanged = delegate { }; //UI update.
-    public static Action<bool> OnAimStateChanged = delegate { }; // true: Niþan alýyor false: býraktý.
+    public static Action<bool> OnAimStateChanged = delegate { }; // true: Niï¿½an alï¿½yor false: bï¿½raktï¿½.
+    public static Action<Collider, float> OnEnemyAttackedByBow = delegate { }; //vurdugu hedef ve damage hasari
 }

@@ -20,19 +20,37 @@ public class Enemy : MonoBehaviour, IDamageable
         col = GetComponent<Collider>();
     }
 
+    private void OnEnable()
+    {
+        GameEvents.OnEnemyAttackedByBow += TakeDamageFromBow;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnEnemyAttackedByBow -= TakeDamageFromBow;
+    }
+    
+    private void TakeDamageFromBow(Collider targetCollider, float damageAmount)
+    {
+        if (targetCollider.transform.GetComponent<Enemy>() == this)
+        {
+            TakeDamage(damageAmount, EntityTeam.Player);
+        }
+    }
+
     public void Initialize(EnemyData enemyData)
     {
         data = enemyData;
         currentHealth = data.maxHealth;
 
-        // Düþmanýn hýzýný veriden çekip Navigator'a gönder
+        // Dï¿½ï¿½manï¿½n hï¿½zï¿½nï¿½ veriden ï¿½ekip Navigator'a gï¿½nder
         if (navigator != null)
         {
             navigator.SetSpeed(data.speed);
         }
     }
 
-    // Ok ve Kurt saldýrýlarýnýn buraya hasar vurabilmesi için IDamageable fonksiyonu
+    // Ok ve Kurt saldï¿½rï¿½larï¿½nï¿½n buraya hasar vurabilmesi iï¿½in IDamageable fonksiyonu
     public void TakeDamage(float amount, EntityTeam attackerTeam)
     {
         if (IsDead) return;
@@ -41,7 +59,7 @@ public class Enemy : MonoBehaviour, IDamageable
         {
             currentHealth -= amount;
 
-            // Ýsteðe baðlý: GameEvents.OnPlayOneShotSFX("EnemyHurt");
+            // ï¿½steï¿½e baï¿½lï¿½: GameEvents.OnPlayOneShotSFX("EnemyHurt");
 
             if (currentHealth <= 0)
             {
@@ -66,16 +84,16 @@ public class Enemy : MonoBehaviour, IDamageable
             agent.enabled = false;
         }
 
-        // Asena'nýn diðer oklarý ölü cesede saplanmasýn diye collider'ý kapat
+        // Asena'nï¿½n diï¿½er oklarï¿½ ï¿½lï¿½ cesede saplanmasï¿½n diye collider'ï¿½ kapat
         if (col != null) col.enabled = false;
 
-        // Ýsteðe baðlý: GameEvents.OnPlayOneShotSFX("EnemyDeath");
+        // ï¿½steï¿½e baï¿½lï¿½: GameEvents.OnPlayOneShotSFX("EnemyDeath");
 
         // 3 saniye cesedi yerde bekletip sonra sahneden sil
         Destroy(gameObject, 3f);
     }
 
-    // Navigator hedefe yaklaþýnca bu fonksiyonu çaðýracak
+    // Navigator hedefe yaklaï¿½ï¿½nca bu fonksiyonu ï¿½aï¿½ï¿½racak
     public void TriggerAttackAnimation()
     {
         if (!IsDead) anim.SetTrigger("attack");

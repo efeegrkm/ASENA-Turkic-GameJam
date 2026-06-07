@@ -5,17 +5,17 @@ using UnityEngine.Events;
 public class Arrow : MonoBehaviour
 {
     [Header("Combat Settings")]
-    [Tooltip("Okun hedefe vuracaðý hasar miktarý")]
+    [Tooltip("Okun hedefe vuracaï¿½ï¿½ hasar miktarï¿½")]
     [SerializeField] private float damageAmount = 30f;
 
     [Header("Stick Settings")]
-    [Tooltip("Okun çarptýðý yüzeye ne kadar gömüleceði (metre)")]
+    [Tooltip("Okun ï¿½arptï¿½ï¿½ï¿½ yï¿½zeye ne kadar gï¿½mï¿½leceï¿½i (metre)")]
     [SerializeField] private float stickDepth = 0.25f;
-    [Tooltip("Okun saplanabileceði katmanlar (Örn: Çevre, Düþman)")]
+    [Tooltip("Okun saplanabileceï¿½i katmanlar (ï¿½rn: ï¿½evre, Dï¿½ï¿½man)")]
     [SerializeField] private LayerMask stickableLayers;
 
     [Header("References")]
-    [Tooltip("Ok saplandýðýnda aktif edilecek olan etkileþim scriptin")]
+    [Tooltip("Ok saplandï¿½ï¿½ï¿½nda aktif edilecek olan etkileï¿½im scriptin")]
     [SerializeField] private InteractableObject interactableComponent;
 
     private Rigidbody rb;
@@ -27,7 +27,7 @@ public class Arrow : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
 
-        // ÇÖZÜM 3 (FÝZÝK): Okun yüksek hýzda duvarlarýn/zeminin içinden geçmesini engeller.
+        // ï¿½ï¿½Zï¿½M 3 (Fï¿½Zï¿½K): Okun yï¿½ksek hï¿½zda duvarlarï¿½n/zeminin iï¿½inden geï¿½mesini engeller.
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         if (interactableComponent != null)
@@ -56,6 +56,7 @@ public class Arrow : MonoBehaviour
         if (((1 << collision.gameObject.layer) & stickableLayers) != 0)
         {
             StickToTarget(collision);
+            ShootTarget(collision, damageAmount);
         }
         else
         {
@@ -87,5 +88,10 @@ public class Arrow : MonoBehaviour
         {
             GameEvents.OnPlayOneShotSFX("ArrowHitWood");
         }
+    }
+
+    private void ShootTarget(Collision collision, float damage)
+    {
+        GameEvents.OnEnemyAttackedByBow?.Invoke(collision.collider, damage);
     }
 }

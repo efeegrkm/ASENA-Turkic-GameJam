@@ -20,9 +20,11 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private Transform[] zone3SpawnPoints;
 
     [Header("Zones")]
-    [SerializeField] private GameObject zone1;
-    [SerializeField] private GameObject zone2;
-    [SerializeField] private GameObject zone3;
+    [SerializeField] private MeshCollider zone1;
+    [SerializeField] private MeshCollider zone2;
+    [SerializeField] private MeshCollider zone3;
+
+    private MeshCollider currentZoneCollider;
 
     //State machine to handle spawning and resting periods
     private enum SpawnerState {Spawning, Resting}
@@ -32,6 +34,8 @@ public class EnemySpawner : MonoBehaviour
     private float spawnTimer;
     private float restTimer;
     private int enemiesSpawnedInCurrentWave = 0;
+
+    private bool isFirstEnemySent = false;
     
     private void Awake()
     {
@@ -41,11 +45,13 @@ public class EnemySpawner : MonoBehaviour
 
     private void Start()
     {
-        StartNewWave();
+        SendFirstEnemy();
     }
 
     private void Update()
     {
+        if (!isFirstEnemySent) return;
+
         if (currentState == SpawnerState.Spawning)
         {
             HandleSpawning();
@@ -91,6 +97,12 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    private void SendFirstEnemy()
+    {
+        currentState = SpawnerState.Spawning;
+        SpawnEnemy();
+    }
+
     private void StartNewWave()
     {
         currentState = SpawnerState.Spawning;
@@ -113,6 +125,7 @@ public class EnemySpawner : MonoBehaviour
     private void SpawnEnemy()
     {
         //Get a random spawn point ONLY from the active zone
+        currentZoneCollider = GetActiveZoneCollider();
         Transform randomPoint = GetRandomPointForCurrentZone();
         if (randomPoint == null) return;
 
@@ -127,10 +140,29 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+    private MeshCollider GetActiveZoneCollider()
+    {
+        if (IsInsideZone(transform.position, zone1)) return zone1;
+        else if (IsInsideZone(transform.position, zone2)) return zone2;
+        else if (IsInsideZone(transform.position, zone3)) return zone3;
+
+        Debug.LogWarning("Player is not inside any defined zone! Defaulting to Zone 1 collider.");
+        return zone1; // Default to Zone 1 if somehow outside all zones
+    }
+
+    private bool IsInsideZone(Vector3 point, MeshCollider planeRenderer)
+    {
+        Bounds bounds = planeRenderer.bounds;
+
+        bool isInsideXBounds = point.x >= bounds.min.x && point.x <= bounds.max.x;
+        bool isInsideZBounds = point.z >= bounds.min.z && point.z <= bounds.max.z;
+
+        return isInsideXBounds && isInsideZBounds;
+    }
+
     private Transform GetRandomPointForCurrentZone()
     {
-        //Debug.Log($"Getting spawn point for Zone {currentZone}");
-        Transform[] activeList = currentZone == 1 ? zone1SpawnPoints : (currentZone == 2 ? zone2SpawnPoints : zone3SpawnPoints);
+        Transform[] activeList = currentZoneCollider == zone1 ? zone1SpawnPoints : (currentZoneCollider == zone2 ? zone2SpawnPoints : zone3SpawnPoints);
         
         if (activeList.Length == 0)
         {
@@ -147,8 +179,8 @@ public class EnemySpawner : MonoBehaviour
         int randomIndex = 0;
         // Logic to dynamically pick enemy types based on the current zone progression
         if (currentZone == 1) randomIndex = 0;
-        else if (currentZone == 2) randomIndex = Random.Range(0, Mathf.Min(2, enemyTypes.Count));
-        else randomIndex = Random.Range(0, enemyTypes.Count);
+        //else if (currentZone == 2) randomIndex = Random.Range(0, Mathf.Min(2, enemyTypes.Count));
+        //else randomIndex = Random.Range(0, enemyTypes.Count);
 
         return enemyTypes[randomIndex];
     }
