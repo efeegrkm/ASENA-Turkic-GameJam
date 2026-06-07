@@ -22,11 +22,7 @@ public class BabyManager : MonoBehaviour
     [SerializeField] private float dropAnimDuration = 1.0f;
     [SerializeField] private float nurseAnimDuration = 3.0f;
 
-    [Header("UI Settings")]
-    [Tooltip("Sahnede bebe�in �st�ne yerle�tirdi�in Slider objesini buraya s�r�kle")]
-    [SerializeField] private UnityEngine.UI.Slider hungerSlider;
-
-    [Header("Ground Snapping (Zemin Alg�lama)")]
+    [Header("Ground Snapping (Zemin Algılama)")]
     [SerializeField] private LayerMask groundLayer;
 
     private bool isCrying = false;
@@ -42,13 +38,6 @@ public class BabyManager : MonoBehaviour
         {
             meshPivotOffset = transform.position.y - hit.point.y;
         }
-
-        // Slider ayarlar�n� ba�lang��ta e�itle
-        if (hungerSlider != null)
-        {
-            hungerSlider.maxValue = maxHunger;
-            hungerSlider.value = currentHunger;
-        }
     }
 
     private void OnEnable()
@@ -59,6 +48,8 @@ public class BabyManager : MonoBehaviour
         GameEvents.OnTryDragRequested += HandleDragRequest;
         GameEvents.OnTryDropRequested += HandleDropRequest;
         GameEvents.OnBabyStolen += HandleStolenRequest;
+
+        // Arkadaşının eklediği ses eventi bağlantısı
         GameEvents.OnBabyCrying += HandleBabyCrying;
     }
 
@@ -70,6 +61,8 @@ public class BabyManager : MonoBehaviour
         GameEvents.OnTryDragRequested -= HandleDragRequest;
         GameEvents.OnTryDropRequested -= HandleDropRequest;
         GameEvents.OnBabyStolen -= HandleStolenRequest;
+
+        // Arkadaşının eklediği ses eventi bağlantısı
         GameEvents.OnBabyCrying -= HandleBabyCrying;
     }
 
@@ -77,33 +70,33 @@ public class BabyManager : MonoBehaviour
 
     private void Update()
     {
+        // 1. Açlığı Düşür ve Sınırla
         if (currentHunger > 0)
         {
             currentHunger -= hungerDepletionRate * Time.deltaTime;
-            currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
-
-            // Kod i�i eventleri ate�le
-            GameEvents.OnBabyHungerChanged(currentHunger, maxHunger);
-
-            // Sahnede haz�r olan UI Slider'� direkt g�ncelle
-            if (hungerSlider != null) hungerSlider.value = currentHunger;
-
-            if (currentHunger <= cryingThreshold && !isCrying)
-            {
-                isCrying = true;
-                GameEvents.OnBabyCrying(true);
-                GameEvents.OnShowHint("Bebek a�l�yor! Y�rt�c�lar� �ekmeden �nce onu besle.", 4f);
-            }
-            else if (currentHunger > cryingThreshold && isCrying)
-            {
-                isCrying = false;
-                GameEvents.OnBabyCrying(false);
-            }
         }
+        currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
+
+        // 2. Her Update'te UI'a haber ver (Slider kodu koptu, BabyHungerUI.cs bunu dinleyecek)
+        GameEvents.OnBabyHungerChanged(currentHunger, maxHunger);
+
+        // 3. Ağlama Kontrolü
+        if (currentHunger <= cryingThreshold && currentHunger > 0 && !isCrying)
+        {
+            isCrying = true;
+            GameEvents.OnBabyCrying(true);
+            GameEvents.OnShowHint("Bebek ağlıyor! Yırtıcıları çekmeden önce onu besle.", 4f);
+        }
+        else if (currentHunger > cryingThreshold && isCrying)
+        {
+            isCrying = false;
+            GameEvents.OnBabyCrying(false);
+        }
+
+        // 4. Oyun Bitiş Kontrolü (Açlık 0 ise)
         else if (currentHunger <= 0 && currentState != BabyState.Stolen)
         {
-            // OYUN B�TT�: Bebek A�l�ktan �ld�
-            GameEvents.OnGameOver?.Invoke("O�uz Bebek A�l�ktan �ld�...");
+            GameEvents.OnGameOver?.Invoke("Oğuz Bebek Açlıktan Öldü...");
         }
     }
 
@@ -116,10 +109,10 @@ public class BabyManager : MonoBehaviour
         currentState = BabyState.Stolen;
         GameEvents.OnBabyStateChanged(currentState);
 
-        // OYUN B�TT�: Bebek Ka��r�ld�
-        GameEvents.OnGameOver?.Invoke("Yelbegen O�uz Bebe�i Ormana Ka��rd�...");
+        GameEvents.OnGameOver?.Invoke("Yelbegen Oğuz Bebeği Ormana Kaçırdı...");
     }
 
+    // Arkadaşının eklediği harika ses metodu
     private void HandleBabyCrying(bool isNowCrying)
     {
         if (isNowCrying)
@@ -202,13 +195,13 @@ public class BabyManager : MonoBehaviour
 
         if (currentState == BabyState.Dropped && Vector3.Distance(transform.position, playerPosition) > maxNurseDistance)
         {
-            GameEvents.OnShowHint("Bebe�i emzirmek i�in yeterince yak�n de�ilsin.", 3f);
+            GameEvents.OnShowHint("Bebeği emzirmek için yeterince yakın değilsin.", 3f);
             return;
         }
 
         if (currentHunger >= nurseThreshold)
         {
-            GameEvents.OnShowHint("O�uz bebek �u an tok, emzirmeye gerek yok.", 3f);
+            GameEvents.OnShowHint("Oğuz bebek şu an tok, emzirmeye gerek yok.", 3f);
             return;
         }
         StartCoroutine(NurseRoutine());
@@ -221,6 +214,10 @@ public class BabyManager : MonoBehaviour
         yield return new WaitForSeconds(nurseAnimDuration);
         currentHunger += nurseRestoreAmount;
         currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
+
+        // BİZİM EKLEDİĞİMİZ KISIM: Emzirme bittiğinde barın anında dolduğunu görmek için eventi bir kez daha fırlatıyoruz
+        GameEvents.OnBabyHungerChanged(currentHunger, maxHunger);
+
         GameEvents.OnBabyNurseCompleted();
         isTransitioning = false;
     }
