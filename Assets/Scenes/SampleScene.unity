@@ -82431,7 +82431,6 @@ MonoBehaviour:
   pickupAnimDuration: 1.2
   dropAnimDuration: 1
   nurseAnimDuration: 3
-  hungerSlider: {fileID: 0}
   groundLayer:
     serializedVersion: 2
     m_Bits: 128
