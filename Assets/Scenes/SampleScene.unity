@@ -82423,7 +82423,7 @@ MonoBehaviour:
   currentState: 0
   maxHunger: 100
   currentHunger: 100
-  hungerDepletionRate: 1.5
+  hungerDepletionRate: 1
   nurseThreshold: 60
   cryingThreshold: 30
   nurseRestoreAmount: 50
