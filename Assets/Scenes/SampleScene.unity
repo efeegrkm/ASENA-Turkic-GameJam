@@ -83055,8 +83055,35 @@ MonoBehaviour:
   musicSource: {fileID: 7677162892287499865}
   oneShotSfxSource: {fileID: 7635833127022030059}
   loopedSfxSource: {fileID: 6068634786267802819}
-  musicSounds: []
-  oneShotSfxSounds: []
+  musicSounds:
+  - name: FightMusic
+    clip: {fileID: 8300000, guid: 0fef986f63de02743bd0f0a3a76be2f5, type: 3}
+    volume: 0.4
+  oneShotSfxSounds:
+  - name: BabyCry
+    clip: {fileID: 8300000, guid: 7b796eff1109f3d498c35b69ec6baf94, type: 3}
+    volume: 0.4
+  - name: BowShoot
+    clip: {fileID: 8300000, guid: 185d1e5c54a04204ba82f1704aefdbcf, type: 3}
+    volume: 1
+  - name: DieByArrow
+    clip: {fileID: 8300000, guid: dea0444fc6c60174a8a9a347c7144244, type: 3}
+    volume: 0.5
+  - name: TransformHowl
+    clip: {fileID: 8300000, guid: 84e25548fe074a44eacb36cc5a0948f9, type: 3}
+    volume: 0.5
+  - name: WolfBite1
+    clip: {fileID: 8300000, guid: 632a17ff58a6411498d9ea8f622aadd1, type: 3}
+    volume: 0.5
+  - name: WolfBite2
+    clip: {fileID: 8300000, guid: 473b4df24e482c84fa38dbeed75b6201, type: 3}
+    volume: 0.5
+  - name: WolfBite3
+    clip: {fileID: 8300000, guid: fa8949594904a034ab613b3a3692b78c, type: 3}
+    volume: 0.5
+  - name: YelbegenPunchGround
+    clip: {fileID: 8300000, guid: e0ae63b8b660349418bb4ae317193a9d, type: 3}
+    volume: 0.5
   loopedSfxSounds: []
   musicFadeDuration: 0.5
   loopedSfxFadeDuration: 0.5
