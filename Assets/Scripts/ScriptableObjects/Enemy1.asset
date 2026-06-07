@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Enemy1
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   enemyName: Enemy1
-  enemyPrefab: {fileID: 5833661997601862619, guid: 5d8afabe0e25a9a4fadcc69f1504ef41, type: 3}
+  enemyPrefab: {fileID: 4430541756115550360, guid: 5d8afabe0e25a9a4fadcc69f1504ef41, type: 3}
   maxHealth: 100
   health: 100
   speed: 5
