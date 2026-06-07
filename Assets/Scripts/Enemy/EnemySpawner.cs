@@ -27,13 +27,16 @@ public class EnemySpawner : MonoBehaviour
     private MeshCollider currentZoneCollider;
 
     //State machine to handle spawning and resting periods
-    private enum SpawnerState {Spawning, Resting}
+    private enum SpawnerState {Spawning, Resting, Tutorial}
     private SpawnerState currentState = SpawnerState.Spawning;
 
     private int currentZone = 1;
     private float spawnTimer;
     private float restTimer;
     private int enemiesSpawnedInCurrentWave = 0;
+
+    public float tutorialDuration = 4f; // Panelin ekranda kalacağı saniye
+    private float tutorialTimer;
 
     private bool isFirstEnemySent = false;
     
@@ -52,6 +55,7 @@ public class EnemySpawner : MonoBehaviour
     {
         if (!isFirstEnemySent) return;
 
+        // Yeni durum makinesi kontrolü
         if (currentState == SpawnerState.Spawning)
         {
             HandleSpawning();
@@ -59,6 +63,10 @@ public class EnemySpawner : MonoBehaviour
         else if (currentState == SpawnerState.Resting)
         {
             HandleResting();
+        }
+        else if (currentState == SpawnerState.Tutorial)
+        {
+            HandleTutorial();
         }
     }
 
@@ -99,8 +107,28 @@ public class EnemySpawner : MonoBehaviour
 
     private void SendFirstEnemy()
     {
-        currentState = SpawnerState.Spawning;
         SpawnEnemy();
+        enemiesSpawnedInCurrentWave++; // İlk düşmanı da mevcut dalga sayısına dahil ediyoruz
+        isFirstEnemySent = true;
+
+        // Normal doğmayı değil, önce Tutorial aşamasını başlatıyoruz
+        currentState = SpawnerState.Tutorial;
+        tutorialTimer = tutorialDuration;
+
+    }
+
+    private void HandleTutorial()
+    {
+        tutorialTimer -= Time.deltaTime;
+        if (tutorialTimer <= 0)
+        {
+            GameEvents.OnShowHint("Düşmanlar bebeğe saldırmadan onu koru!", tutorialDuration);
+        }
+        // Bilgilendirme bitti, artık normal doğma döngüsüne geçebiliriz
+        currentState = SpawnerState.Spawning;
+            
+        // Bir sonraki düşmanın ne zaman geleceğini belirle
+        spawnTimer = spawnIntervalsPerZone[currentZone - 1]; 
     }
 
     private void StartNewWave()

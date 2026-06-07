@@ -11,8 +11,8 @@ public class WolfCombatController : MonoBehaviour
     [SerializeField] private Transform attackPoint;
     [SerializeField] private LayerMask enemyLayer;
 
-    [Header("Dash (Atýlma) Settings")]
-    [Tooltip("Karakterin atýlmadan önce güç toplama (gerinme) süresi")]
+    [Header("Dash (Atï¿½lma) Settings")]
+    [Tooltip("Karakterin atï¿½lmadan ï¿½nce gï¿½ï¿½ toplama (gerinme) sï¿½resi")]
     [SerializeField] private float dashWindUpDuration = 0.6f;
     [SerializeField] private float dashForce = 15f;
     [SerializeField] private float dashDuration = 0.4f;
@@ -77,6 +77,7 @@ public class WolfCombatController : MonoBehaviour
         {
             if (hit.TryGetComponent<IDamageable>(out IDamageable target))
             {
+                GameEvents.OnEnemyAttackedByWolf(hit, meleeDamage);
                 target.TakeDamage(meleeDamage, EntityTeam.Player);
             }
         }
@@ -97,14 +98,14 @@ public class WolfCombatController : MonoBehaviour
         isActionLocked = true;
         lastDashTime = Time.time;
 
-        // 1. Eventleri ateþle (Animasyon ve hareket kilidi burada baþlar)
+        // 1. Eventleri ateï¿½le (Animasyon ve hareket kilidi burada baï¿½lar)
         GameEvents.OnWolfDashStarted();
         GameEvents.OnPlayOneShotSFX("WolfDash");
 
-        // 2. Fiziksel atýlma öncesi, animasyonun gerinmesi için bekle!
+        // 2. Fiziksel atï¿½lma ï¿½ncesi, animasyonun gerinmesi iï¿½in bekle!
         yield return new WaitForSeconds(dashWindUpDuration);
 
-        // 3. Fiziksel Atýlma Ýþlemi
+        // 3. Fiziksel Atï¿½lma ï¿½ï¿½lemi
         Vector3 dashDirection = transform.forward;
         float elapsed = 0f;
 
@@ -133,7 +134,7 @@ public class WolfCombatController : MonoBehaviour
             }
         }
 
-        // Hareketi serbest býrak
+        // Hareketi serbest bï¿½rak
         GameEvents.OnWolfDashCompleted();
         isActionLocked = false;
     }

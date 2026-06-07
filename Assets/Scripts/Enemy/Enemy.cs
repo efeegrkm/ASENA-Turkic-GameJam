@@ -23,14 +23,24 @@ public class Enemy : MonoBehaviour, IDamageable
     private void OnEnable()
     {
         GameEvents.OnEnemyAttackedByBow += TakeDamageFromBow;
+        GameEvents.OnEnemyAttackedByWolf += TakeDamageFromWolf;
     }
 
     private void OnDisable()
     {
         GameEvents.OnEnemyAttackedByBow -= TakeDamageFromBow;
+        GameEvents.OnEnemyAttackedByWolf -= TakeDamageFromWolf;
     }
     
     private void TakeDamageFromBow(Collider targetCollider, float damageAmount)
+    {
+        if (targetCollider.transform.GetComponent<Enemy>() == this)
+        {
+            TakeDamage(damageAmount, EntityTeam.Player);
+        }
+    }
+
+    private void TakeDamageFromWolf(Collider targetCollider, float damageAmount)
     {
         if (targetCollider.transform.GetComponent<Enemy>() == this)
         {
