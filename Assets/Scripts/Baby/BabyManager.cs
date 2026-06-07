@@ -22,26 +22,32 @@ public class BabyManager : MonoBehaviour
     [SerializeField] private float dropAnimDuration = 1.0f;
     [SerializeField] private float nurseAnimDuration = 3.0f;
 
+    [Header("UI Settings")]
+    [Tooltip("Sahnede bebeðin üstüne yerleþtirdiðin Slider objesini buraya sürükle")]
+    [SerializeField] private UnityEngine.UI.Slider hungerSlider;
+
     [Header("Ground Snapping (Zemin Algýlama)")]
-    [Tooltip("Haritadaki engebeli zeminleri (Terrain, Kaya, Platform) algýlamak için kullanýlan katman")]
     [SerializeField] private LayerMask groundLayer;
 
     private bool isCrying = false;
     private bool isTransitioning = false;
-
     private float meshPivotOffset = 0f;
-
-    // ÇÖZÜM: Modelin senin ayarladýðýn varsayýlan (Base) rotasyonunu hafýzada tutacak
     private Vector3 baseEulerAngles;
 
     private void Start()
     {
-        // Oyun baþlar baþlamaz senin Inspector'da ayarladýðýn o kusursuz dönüþleri kaydet!
         baseEulerAngles = transform.eulerAngles;
 
         if (Physics.Raycast(transform.position + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 5f, groundLayer))
         {
             meshPivotOffset = transform.position.y - hit.point.y;
+        }
+
+        // Slider ayarlarýný baþlangýçta eþitle
+        if (hungerSlider != null)
+        {
+            hungerSlider.maxValue = maxHunger;
+            hungerSlider.value = currentHunger;
         }
     }
 
@@ -52,7 +58,6 @@ public class BabyManager : MonoBehaviour
         GameEvents.OnTryPickupRequested += HandlePickupRequest;
         GameEvents.OnTryDragRequested += HandleDragRequest;
         GameEvents.OnTryDropRequested += HandleDropRequest;
-
         GameEvents.OnBabyStolen += HandleStolenRequest;
     }
 
@@ -63,7 +68,6 @@ public class BabyManager : MonoBehaviour
         GameEvents.OnTryPickupRequested -= HandlePickupRequest;
         GameEvents.OnTryDragRequested -= HandleDragRequest;
         GameEvents.OnTryDropRequested -= HandleDropRequest;
-
         GameEvents.OnBabyStolen -= HandleStolenRequest;
     }
 
@@ -75,19 +79,29 @@ public class BabyManager : MonoBehaviour
         {
             currentHunger -= hungerDepletionRate * Time.deltaTime;
             currentHunger = Mathf.Clamp(currentHunger, 0, maxHunger);
-            GameEvents.OnBabyHungerChanged(currentHunger, maxHunger);
-        }
 
-        if (currentHunger <= cryingThreshold && !isCrying)
-        {
-            isCrying = true;
-            GameEvents.OnBabyCrying(true);
-            GameEvents.OnShowHint("Bebek aðlýyor! Yýrtýcýlarý çekmeden önce onu besle.", 4f);
+            // Kod içi eventleri ateþle
+            GameEvents.OnBabyHungerChanged(currentHunger, maxHunger);
+
+            // Sahnede hazýr olan UI Slider'ý direkt güncelle
+            if (hungerSlider != null) hungerSlider.value = currentHunger;
+
+            if (currentHunger <= cryingThreshold && !isCrying)
+            {
+                isCrying = true;
+                GameEvents.OnBabyCrying(true);
+                GameEvents.OnShowHint("Bebek aðlýyor! Yýrtýcýlarý çekmeden önce onu besle.", 4f);
+            }
+            else if (currentHunger > cryingThreshold && isCrying)
+            {
+                isCrying = false;
+                GameEvents.OnBabyCrying(false);
+            }
         }
-        else if (currentHunger > cryingThreshold && isCrying)
+        else if (currentHunger <= 0 && currentState != BabyState.Stolen)
         {
-            isCrying = false;
-            GameEvents.OnBabyCrying(false);
+            // OYUN BÝTTÝ: Bebek Açlýktan Öldü
+            GameEvents.OnGameOver?.Invoke("Oðuz Bebek Açlýktan Öldü...");
         }
     }
 
@@ -95,12 +109,13 @@ public class BabyManager : MonoBehaviour
     {
         transform.SetParent(enemyHand);
         transform.localPosition = Vector3.zero;
-
-        // Yelbegen bebeði aldýðýnda bebeðin kendi doðal dik duruþuna (Base Rotasyona) dönmesi için
         transform.localRotation = Quaternion.Euler(baseEulerAngles);
 
         currentState = BabyState.Stolen;
         GameEvents.OnBabyStateChanged(currentState);
+
+        // OYUN BÝTTÝ: Bebek Kaçýrýldý
+        GameEvents.OnGameOver?.Invoke("Yelbegen Oðuz Bebeði Ormana Kaçýrdý...");
     }
 
     private void HandlePickupRequest(Transform mountPoint)
@@ -113,13 +128,10 @@ public class BabyManager : MonoBehaviour
     {
         isTransitioning = true;
         GameEvents.OnBabyPickupStarted();
-
         yield return new WaitForSeconds(pickupAnimDuration);
 
         transform.SetParent(mountPoint);
         transform.localPosition = Vector3.zero;
-
-        // ÇÖZÜM: 0'larý zorla atamak yerine, Base rotasyonun X'ine +90 ekliyoruz! Y ve Z kendi orijinal halinde kalýyor.
         transform.localRotation = Quaternion.Euler(baseEulerAngles.x + 90f, baseEulerAngles.y, baseEulerAngles.z);
 
         currentState = BabyState.CarriedOnBack;
@@ -130,10 +142,7 @@ public class BabyManager : MonoBehaviour
     private void HandleDragRequest(Transform mouthPoint)
     {
         if (isTransitioning || currentState != BabyState.Dropped) return;
-
-        // "true" parametresi bebeðin world rotasyonunu ezdirmeyeceði için kurt çekerken base rotasyon zaten korunur
         transform.SetParent(mouthPoint, true);
-
         currentState = BabyState.CarriedInMouth;
         GameEvents.OnBabyStateChanged(currentState);
     }
@@ -143,7 +152,6 @@ public class BabyManager : MonoBehaviour
         if (isTransitioning || currentState == BabyState.Dropped) return;
 
         Vector3 finalDropPos = dropPosition;
-
         if (Physics.Raycast(dropPosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 20f, groundLayer))
         {
             finalDropPos.y = hit.point.y + meshPivotOffset;
@@ -157,10 +165,7 @@ public class BabyManager : MonoBehaviour
         {
             transform.SetParent(null, true);
             transform.position = finalDropPos;
-
-            // ÇÖZÜM: X ve Z eksenleri tamamen base (varsayýlan) halinde kalýyor, sadece Y ekseni düþtüðü açýda býrakýlýyor
             transform.rotation = Quaternion.Euler(baseEulerAngles.x, transform.eulerAngles.y, baseEulerAngles.z);
-
             currentState = BabyState.Dropped;
             GameEvents.OnBabyStateChanged(currentState);
         }
@@ -170,13 +175,10 @@ public class BabyManager : MonoBehaviour
     {
         isTransitioning = true;
         GameEvents.OnBabyDropStarted();
-
         yield return new WaitForSeconds(dropAnimDuration);
 
         transform.SetParent(null);
         transform.position = dropPosition;
-
-        // ÇÖZÜM: Sýrtýndan indiðinde yine kendi base rotasyonuna kavuþuyor
         transform.rotation = Quaternion.Euler(baseEulerAngles.x, transform.eulerAngles.y, baseEulerAngles.z);
 
         currentState = BabyState.Dropped;
@@ -188,13 +190,10 @@ public class BabyManager : MonoBehaviour
     {
         if (isTransitioning || currentState == BabyState.CarriedInMouth || currentState == BabyState.Stolen) return;
 
-        if (currentState == BabyState.Dropped)
+        if (currentState == BabyState.Dropped && Vector3.Distance(transform.position, playerPosition) > maxNurseDistance)
         {
-            if (Vector3.Distance(transform.position, playerPosition) > maxNurseDistance)
-            {
-                GameEvents.OnShowHint("Bebeði emzirmek için yeterince yakýn deðilsin.", 3f);
-                return;
-            }
+            GameEvents.OnShowHint("Bebeði emzirmek için yeterince yakýn deðilsin.", 3f);
+            return;
         }
 
         if (currentHunger >= nurseThreshold)

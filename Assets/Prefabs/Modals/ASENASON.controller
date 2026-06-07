@@ -8,7 +8,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: rig_transform
-  m_Speed: 1
+  m_Speed: 0.3
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 7158097273914592287}
@@ -199,7 +199,7 @@ AnimatorStateTransition:
   m_Mute: 0
   m_IsExit: 0
   serializedVersion: 3
-  m_TransitionDuration: 0.036919832
+  m_TransitionDuration: 0
   m_TransitionOffset: 0
   m_ExitTime: 0.75
   m_HasExitTime: 0
@@ -589,7 +589,7 @@ AnimatorStateMachine:
   m_ChildStates:
   - serializedVersion: 1
     m_State: {fileID: 5719142436614485935}
-    m_Position: {x: 330, y: 0, z: 0}
+    m_Position: {x: 340, y: 0, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8580173212929540962}
     m_Position: {x: 150, y: 90, z: 0}
@@ -601,7 +601,7 @@ AnimatorStateMachine:
     m_Position: {x: 220, y: 210, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -9117823217974902682}
-    m_Position: {x: 340, y: -60, z: 0}
+    m_Position: {x: 300, y: -70, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 8741355675005051947}
     m_Position: {x: 510, y: 210, z: 0}
@@ -663,7 +663,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: rig_dodge
-  m_Speed: 1
+  m_Speed: 0.6
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: -1333457010592731286}
@@ -690,7 +690,7 @@ AnimatorState:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: rig_Walk
-  m_Speed: 1
+  m_Speed: 3
   m_CycleOffset: 0
   m_Transitions:
   - {fileID: 758510687939239177}

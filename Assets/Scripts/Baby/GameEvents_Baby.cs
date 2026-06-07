@@ -23,4 +23,7 @@ public static partial class GameEvents
     public static Action OnBabyDropStarted = delegate { };
     public static Action OnBabyNurseStarted = delegate { };
     public static Action OnBabyNurseCompleted = delegate { };
+
+    public static Action<string> OnGameOver = delegate { };
+
 }

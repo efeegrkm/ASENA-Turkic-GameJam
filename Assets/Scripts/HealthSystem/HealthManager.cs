@@ -8,10 +8,14 @@ public class HealthManager : MonoBehaviour, IDamageable
     [Tooltip("Bu objenin hangi takýmda olduðunu seçin.")]
     [SerializeField] private EntityTeam team = EntityTeam.Enemy;
 
+    [Header("Game Over UI (Sadece Player Ýçin)")]
+    [Tooltip("Oyun bittiðinde aktif edilecek Ekran Canvas paneli")]
+    [SerializeField] private GameObject gameOverPanel;
+    [Tooltip("Neden öldüðünü yazdýracaðýn Text nesnesi")]
+    [SerializeField] private TMPro.TextMeshProUGUI gameOverReasonText;
+
     [Header("Local Events (VFX, Animasyon vs. için)")]
-    [Tooltip("Hasar aldýðýnda kendi üstündeki animatörde kan veya flinch tetiklemek için")]
     public UnityEvent onTakeDamage;
-    [Tooltip("Öldüðünde kendi objesini silmesi veya ragdoll olmasý için")]
     public UnityEvent onDie;
 
     private float currentHealth;
@@ -21,51 +25,56 @@ public class HealthManager : MonoBehaviour, IDamageable
     {
         currentHealth = maxHealth;
 
-        // Eðer bu script Player'ýn üzerindeyse, oyun baþlar baþlamaz can barý UI'ýný doldur
         if (team == EntityTeam.Player)
         {
             GameEvents.OnPlayerHealthChanged(currentHealth, maxHealth);
+
+            // Baþlangýçta paneli kesin olarak gizle
+            if (gameOverPanel != null) gameOverPanel.SetActive(false);
         }
+    }
+
+    private void OnEnable()
+    {
+        // Sadece Player oyunun bitiþ eventlerini dinlesin
+        if (team == EntityTeam.Player) GameEvents.OnGameOver += TriggerGameOver;
+    }
+
+    private void OnDisable()
+    {
+        if (team == EntityTeam.Player) GameEvents.OnGameOver -= TriggerGameOver;
     }
 
     public void TakeDamage(float amount, EntityTeam attackerTeam)
     {
         if (isDead) return;
 
-        // DOST ATEÞÝ KONTROLÜ: Saldýran kiþi ile bu objenin takýmý aynýysa hasarý iptal et!
-        // (Not: Environment (örn: tuzaklar) herkese hasar verebilir)
-        if (attackerTeam == team && attackerTeam != EntityTeam.Environment)
-        {
-            return;
-        }
+        if (attackerTeam == team && attackerTeam != EntityTeam.Environment) return;
 
         currentHealth -= amount;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
 
-        // Lokal objenin kendi tepkilerini (Ses, Animasyon, Kan partikülü) tetikle
         onTakeDamage?.Invoke();
 
         if (team == EntityTeam.Player)
         {
-            // UI Can barýný güncelle
             GameEvents.OnPlayerHealthChanged(currentHealth, maxHealth);
-            GameEvents.OnPlayOneShotSFX("PlayerHurt"); // Varsa hasar sesiniz
+            GameEvents.OnPlayOneShotSFX("PlayerHurt");
         }
 
-        if (currentHealth <= 0)
-        {
-            Die();
-        }
+        if (currentHealth <= 0) Die();
     }
 
     private void Die()
     {
         isDead = true;
-        onDie?.Invoke(); 
+        onDie?.Invoke();
 
         if (team == EntityTeam.Player)
         {
             GameEvents.OnPlayerDied();
+            // OYUN BÝTTÝ: Asena Öldü
+            GameEvents.OnGameOver?.Invoke("Asena Öldü... Oðuz Bebek Kimsesiz Kaldý.");
         }
         else if (team == EntityTeam.Enemy)
         {
@@ -84,5 +93,21 @@ public class HealthManager : MonoBehaviour, IDamageable
         {
             GameEvents.OnPlayerHealthChanged(currentHealth, maxHealth);
         }
+    }
+
+    private void TriggerGameOver(string reason)
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+            if (gameOverReasonText != null) gameOverReasonText.text = reason;
+        }
+
+        // Oyunu, fizikleri ve Update metotlarýný tamamen durdurur
+        Time.timeScale = 0f;
+
+        // Yeniden baþlatmak vb. için Mouse imlecini geri ver
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 }
