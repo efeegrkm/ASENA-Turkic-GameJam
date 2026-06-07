@@ -9,11 +9,11 @@ public class EnemyNavigator : MonoBehaviour
     private Transform target;
 
     [Header("Attack Settings")]
-    [Tooltip("Bebeðe ne kadar yaklaþýnca vurmaya baþlasýn?")]
+    [Tooltip("Bebeï¿½e ne kadar yaklaï¿½ï¿½nca vurmaya baï¿½lasï¿½n?")]
     [SerializeField] private float attackRange = 1.5f;
-    [Tooltip("Ýki saldýrý arasýnda ne kadar beklesin?")]
+    [Tooltip("ï¿½ki saldï¿½rï¿½ arasï¿½nda ne kadar beklesin?")]
     [SerializeField] private float attackCooldown = 2.0f;
-    [Tooltip("Saldýrý animasyonu ne kadar sürüyor? (O sýrada yürümez)")]
+    [Tooltip("Saldï¿½rï¿½ animasyonu ne kadar sï¿½rï¿½yor? (O sï¿½rada yï¿½rï¿½mez)")]
     [SerializeField] private float attackAnimDuration = 1.0f;
 
     private NavMeshAgent agent;
@@ -29,13 +29,19 @@ public class EnemyNavigator : MonoBehaviour
 
     private void OnEnable()
     {
+        GameEvents.OnPlayerGotAttacked += HandlePlayerGotAttacked;
         if (GameEvents.GetBabyTransform != null)
         {
-            target = GameEvents.GetBabyTransform();
+            target = GameEvents.GetPlayerTransform();
         }
     }
 
-    // Enemy.cs tarafýndan EnemyData içindeki hýz ile çaðrýlýr
+    private void OnDisable()
+    {
+        GameEvents.OnPlayerGotAttacked -= HandlePlayerGotAttacked;
+    }
+
+    // Enemy.cs tarafï¿½ndan EnemyData iï¿½indeki hï¿½z ile ï¿½aï¿½rï¿½lï¿½r
     public void SetSpeed(float speed)
     {
         if (agent != null) agent.speed = speed;
@@ -44,13 +50,13 @@ public class EnemyNavigator : MonoBehaviour
     private void Start()
     {
         agent.acceleration = 12f;
-        // Düþmanýn durma mesafesini saldýrý mesafesine eþitle
+        // Dï¿½ï¿½manï¿½n durma mesafesini saldï¿½rï¿½ mesafesine eï¿½itle
         agent.stoppingDistance = attackRange;
     }
 
     private void Update()
     {
-        // Eðer düþman öldüyse veya þu an vurma animasyonundaysa düþünmeyi býrak
+        // Eï¿½er dï¿½ï¿½man ï¿½ldï¿½yse veya ï¿½u an vurma animasyonundaysa dï¿½ï¿½ï¿½nmeyi bï¿½rak
         if (enemyScript != null && enemyScript.IsDead) return;
         if (isAttacking) return;
 
@@ -58,12 +64,13 @@ public class EnemyNavigator : MonoBehaviour
         {
             float distance = Vector3.Distance(transform.position, target.position);
 
-            // Hedefe yeterince yakýnsa ve saldýrý süresi dolduysa
+            // Hedefe yeterince yakï¿½nsa ve saldï¿½rï¿½ sï¿½resi dolduysa
             if (distance <= attackRange && Time.time >= lastAttackTime + attackCooldown)
             {
+                GameEvents.OnPlayerGotAttacked();
                 StartCoroutine(AttackRoutine());
             }
-            // Hedef uzaktaysa ona doðru yürümeye devam et
+            // Hedef uzaktaysa ona doï¿½ru yï¿½rï¿½meye devam et
             else if (distance > attackRange)
             {
                 agent.isStopped = false;
@@ -74,27 +81,33 @@ public class EnemyNavigator : MonoBehaviour
 
     private IEnumerator AttackRoutine()
     {
+        Debug.Log($"{gameObject.name} is attacking!");
         isAttacking = true;
-        agent.isStopped = true; // Vururken yürümeyi durdur
+        agent.isStopped = true; // Vururken yï¿½rï¿½meyi durdur
         lastAttackTime = Time.time;
 
-        // Vurmadan önce yüzünü tam bebeðe dön
+        // Vurmadan ï¿½nce yï¿½zï¿½nï¿½ tam bebeï¿½e dï¿½n
         transform.LookAt(new Vector3(target.position.x, transform.position.y, target.position.z));
 
-        // Animator'deki 'attack' okunu ateþle
+        // Animator'deki 'attack' okunu ateï¿½le
         enemyScript.TriggerAttackAnimation();
 
-        // NOT: Ýleride bebeðin caný azalsýn istersen tam buraya hasar kodunu ekleyebilirsin.
-        // Örn: GameEvents.OnBabyTakeDamage(enemyScript.data.damage);
+        // NOT: ï¿½leride bebeï¿½in canï¿½ azalsï¿½n istersen tam buraya hasar kodunu ekleyebilirsin.
+        // ï¿½rn: GameEvents.OnBabyTakeDamage(enemyScript.data.damage);
 
         // Vurma animasyonunun bitmesini bekle
         yield return new WaitForSeconds(attackAnimDuration);
 
-        // Eðer bu sýrada Asena onu vurup öldürmediyse yürümeye/saldýrmaya devam et
+        // Eï¿½er bu sï¿½rada Asena onu vurup ï¿½ldï¿½rmediyse yï¿½rï¿½meye/saldï¿½rmaya devam et
         if (!enemyScript.IsDead)
         {
             isAttacking = false;
             agent.isStopped = false;
         }
+    }
+
+    private void HandlePlayerGotAttacked()
+    {
+        
     }
 }

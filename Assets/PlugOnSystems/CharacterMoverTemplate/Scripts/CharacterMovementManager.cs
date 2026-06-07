@@ -85,6 +85,8 @@ public class CharacterMovementManager : MonoBehaviour
         GameEvents.OnWolfDashCompleted += UnlockMovement;
         GameEvents.OnWolfDragStateChanged += HandleDragSpeed;
 
+        GameEvents.GetPlayerTransform += GetPlayerTransform;
+
         playerInput.Player.Move.performed += OnMovementPerformed;
         playerInput.Player.Move.canceled += OnMovementCanceled;
     }
@@ -97,6 +99,8 @@ public class CharacterMovementManager : MonoBehaviour
         GameEvents.OnWolfDashStarted -= LockMovementTempD;
         GameEvents.OnWolfDashCompleted -= UnlockMovement;
         GameEvents.OnWolfDragStateChanged -= HandleDragSpeed;
+
+        GameEvents.GetPlayerTransform -= GetPlayerTransform;
 
         playerInput.Player.Move.performed -= OnMovementPerformed;
         playerInput.Player.Move.canceled -= OnMovementCanceled;
@@ -211,4 +215,6 @@ public class CharacterMovementManager : MonoBehaviour
         velocity.y += gravity * Time.deltaTime;
         characterController.Move(velocity * Time.deltaTime);
     }
+
+    private Transform GetPlayerTransform() => transform;
 }

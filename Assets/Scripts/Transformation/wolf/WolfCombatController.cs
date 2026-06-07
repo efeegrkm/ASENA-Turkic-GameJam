@@ -68,7 +68,8 @@ public class WolfCombatController : MonoBehaviour
     {
         isActionLocked = true;
         GameEvents.OnWolfMeleeStarted();
-        GameEvents.OnPlayOneShotSFX("WolfBite");
+
+        PlayWolfAttackSound();
 
         yield return new WaitForSeconds(meleeAnimDuration / 2f);
 
@@ -85,6 +86,12 @@ public class WolfCombatController : MonoBehaviour
         yield return new WaitForSeconds(meleeAnimDuration / 2f);
         GameEvents.OnWolfMeleeCompleted();
         isActionLocked = false;
+    }
+
+    private void PlayWolfAttackSound()
+    {
+        int soundIndex = Random.Range(1, 4); // 1, 2 veya 3
+        GameEvents.OnPlayOneShotSFX($"WolfBite{soundIndex}");
     }
 
     private void TryDash(InputAction.CallbackContext context)

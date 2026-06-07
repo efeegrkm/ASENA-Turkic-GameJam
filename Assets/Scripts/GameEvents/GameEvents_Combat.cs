@@ -11,4 +11,5 @@ public static partial class GameEvents
     public static Action<bool> OnAimStateChanged = delegate { }; // true: Ni�an al�yor false: b�rakt�.
     public static Action<Collider, float> OnEnemyAttackedByBow = delegate { }; //vurdugu hedef ve damage hasari
     public static Action<Collider, float> OnEnemyAttackedByWolf = delegate { }; //vurdugu hedef ve damage hasari
+    public static Action OnPlayerGotAttacked = delegate { }; //
 }

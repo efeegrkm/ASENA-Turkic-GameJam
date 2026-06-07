@@ -73,6 +73,7 @@ public class Enemy : MonoBehaviour, IDamageable
 
             if (currentHealth <= 0)
             {
+                GameEvents.OnPlayOneShotSFX("DieByArrow");
                 Die();
             }
         }

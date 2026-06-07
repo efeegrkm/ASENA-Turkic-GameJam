@@ -10,9 +10,9 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private List<EnemyData> enemyTypes;
 
     [Header("Difficulty Settings (Zone 1, 2, 3)")]
-    [SerializeField] private float[] spawnIntervalsPerZone = {4.0f, 2.5f, 1.2f};
-    [SerializeField] private int[] enemiesPerWavePerZone = {5, 8, 12}; 
-    [SerializeField] private float[] restDurationPerZone = {15f, 10f, 7f};
+    [SerializeField] private float[] spawnIntervalsPerZone = {7f, 7f, 7f};
+    [SerializeField] private int[] enemiesPerWavePerZone = {3, 4, 5}; 
+    [SerializeField] private float[] restDurationPerZone = {15f, 15f, 13f};
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] zone1SpawnPoints;
@@ -133,6 +133,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void StartNewWave()
     {
+        GameEvents.OnPlayMusic("FightMusic");
         currentState = SpawnerState.Spawning;
         enemiesSpawnedInCurrentWave = 0;
         spawnTimer = spawnIntervalsPerZone[currentZone - 1];
