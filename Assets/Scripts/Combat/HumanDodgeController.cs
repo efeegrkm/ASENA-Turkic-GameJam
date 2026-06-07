@@ -60,7 +60,8 @@ public class HumanDodgeController : MonoBehaviour
         isActionLocked = true;
         lastDodgeTime = Time.time;
 
-        GameEvents.OnWolfDashStarted();
+        // SENÝN DÜZELTMEN: Kendi eventini fýrlatýyor
+        GameEvents.OnHumanDodgeStarted();
 
         // Kameranýn baktýðý yönün TAM TERSÝNÝ hesapla (Saf Kite Mantýðý)
         Vector3 dodgeDirection = -mainCamera.transform.forward;
@@ -84,7 +85,8 @@ public class HumanDodgeController : MonoBehaviour
             yield return null;
         }
 
-        GameEvents.OnWolfDashCompleted();
+        // SENÝN DÜZELTMEN: Ýþlem bitince bitiþ eventini fýrlatýyor
+        GameEvents.OnHumanDodgeEnded();
         isActionLocked = false;
     }
 }
