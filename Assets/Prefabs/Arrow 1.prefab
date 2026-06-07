@@ -195,7 +195,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Arrow
   damageAmount: 30
-  stickDepth: 0.06
+  stickDepth: 0.01
   stickableLayers:
     serializedVersion: 2
     m_Bits: 4294967295

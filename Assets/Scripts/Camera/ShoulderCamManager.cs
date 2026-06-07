@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -8,7 +8,7 @@ public class ShoulderCamManager : MonoBehaviour
     [Header("--- Core References ---")]
     [SerializeField] private CinemachineCamera cinemachineCamera;
     [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
-    [Tooltip("Kameraya ekledi�iniz Cinemachine Camera Offset bile�enini buraya s�r�kleyin.")]
+    [Tooltip("Kameraya eklediğiniz Cinemachine Camera Offset bileşenini buraya sürükleyin.")]
     [SerializeField] private CinemachineCameraOffset cameraOffset;
 
     [Header("--- FOV Settings ---")]
@@ -17,9 +17,9 @@ public class ShoulderCamManager : MonoBehaviour
     [SerializeField] private float aimFOV = 40f;
 
     [Header("--- Shoulder Aim Lerp Settings ---")]
-    [Tooltip("Karakterin omzuna hizalanacak offset mesafesi (X: Sa�-Sol, Y: Yukar�-A�a��, Z: �leri-Geri)")]
+    [Tooltip("Karakterin omzuna hizalanacak offset mesafesi (X: Sağ-Sol, Y: Yukarı-Aşağı, Z: İleri-Geri)")]
     [SerializeField] private Vector3 shoulderOffset = new Vector3(0.6f, -0.2f, -0.8f);
-    [Tooltip("Omza ge�i� ve eski haline d�nme p�r�zs�zl�k s�resi (Saniye)")]
+    [Tooltip("Omza geçiş ve eski haline dönme pürüzsüzlük süresi (Saniye)")]
     [SerializeField] private float lerpDuration = 0.3f;
 
     [Header("--- Orbit Settings ---")]
@@ -33,14 +33,29 @@ public class ShoulderCamManager : MonoBehaviour
     [SerializeField] private float verticalLerpDuration = 1.0f;
     [Tooltip("Time required for input to be reenabled after sequence ends")]
     [SerializeField] private float inputReEnableDelay = 1.5f;
+
     [Header("--- Aim Sensitivity ---")]
-    [Tooltip("Ni�an al�rken mouse h�z�n�n ne kadar yava�layaca��")]
+    [Tooltip("Nişan alırken mouse hızının ne kadar yavaşlayacağı")]
     [SerializeField] private float aimSensitivityMultiplier = 0.4f;
+
+    [Header("--- Form Tracking Targets ---")]
+    [Tooltip("İnsan formunda Cinemachine'in takip edeceği kafa objesi (Human Head transform)")]
+    [SerializeField] private Transform humanTrackingTarget;
+    [Tooltip("Kurt formunda Cinemachine'in takip edeceği kafa objesi (Wolf Head transform)")]
+    [SerializeField] private Transform wolfTrackingTarget;
+
+    // ─────────────────────────────────────────────
+    // Private State
+    // ─────────────────────────────────────────────
     private float originalFOV;
     private Vector3 originalOffset;
     private Coroutine transitionCoroutine;
     private Coroutine orbitCoroutine;
     private CinemachineInputAxisController cinemachineInput;
+
+    // ─────────────────────────────────────────────
+    // Unity Lifecycle
+    // ─────────────────────────────────────────────
 
     private void Awake()
     {
@@ -59,6 +74,7 @@ public class ShoulderCamManager : MonoBehaviour
         GameEvents.OnStartDefaultOrbit += StartOrbitSequence;
         GameEvents.OnStartCustomOrbit += StartOrbitSequence;
         GameEvents.OnToggleAimCamera += ToggleAim;
+        GameEvents.OnFormChanged += HandleFormChanged;   // YENİ
     }
 
     private void OnDisable()
@@ -68,6 +84,7 @@ public class ShoulderCamManager : MonoBehaviour
         GameEvents.OnStartDefaultOrbit -= StartOrbitSequence;
         GameEvents.OnStartCustomOrbit -= StartOrbitSequence;
         GameEvents.OnToggleAimCamera -= ToggleAim;
+        GameEvents.OnFormChanged -= HandleFormChanged;   // YENİ
     }
 
     private void InitializeCameraValues()
@@ -77,7 +94,6 @@ public class ShoulderCamManager : MonoBehaviour
             originalFOV = (defaultFOV > 0) ? defaultFOV : cinemachineCamera.Lens.FieldOfView;
         }
 
-        // E�er Inspector'dan s�r�klemeyi unutursan kod otomatik bulsun
         if (cameraOffset == null && cinemachineCamera != null)
         {
             cameraOffset = cinemachineCamera.GetComponent<CinemachineCameraOffset>();
@@ -90,9 +106,38 @@ public class ShoulderCamManager : MonoBehaviour
         else
         {
             originalOffset = Vector3.zero;
-            Debug.LogWarning("CinemachineCameraOffset bile�eni bulunamad�! L�tfen CinemachineCamera'ya ekleyin.");
+            Debug.LogWarning("CinemachineCameraOffset bileşeni bulunamadı! Lütfen CinemachineCamera'ya ekleyin.");
         }
     }
+
+    // ─────────────────────────────────────────────
+    // Form Change — Tracking Target
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// FormManager'ın TransformRoutine'i bittiğinde (modeller swap olduktan sonra)
+    /// GameEvents.OnFormChanged(isWolf) ile tetiklenir.
+    /// Cinemachine'in TrackingTarget ve LookAtTarget'ını aktif forma göre günceller.
+    /// </summary>
+    private void HandleFormChanged(bool isWolf)
+    {
+        if (cinemachineCamera == null) return;
+
+        Transform newTarget = isWolf ? wolfTrackingTarget : humanTrackingTarget;
+
+        if (newTarget == null)
+        {
+            Debug.LogWarning($"ShoulderCamManager: {'{'}{(isWolf ? "Wolf" : "Human")}TrackingTarget{'}'} atanmamış!");
+            return;
+        }
+
+        cinemachineCamera.Target.TrackingTarget = newTarget;
+        cinemachineCamera.Target.LookAtTarget = newTarget;
+    }
+
+    // ─────────────────────────────────────────────
+    // Aim
+    // ─────────────────────────────────────────────
 
     private void ToggleAim(bool isAiming)
     {
@@ -130,7 +175,6 @@ public class ShoulderCamManager : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = Mathf.SmoothStep(0f, 1f, elapsed / lerpDuration);
 
-            // Yeni Offset bile�eni �zerinden lerp i�lemi
             cameraOffset.Offset = Vector3.Lerp(startOffset, targetOffset, t);
 
             var lens = cinemachineCamera.Lens;
@@ -145,6 +189,10 @@ public class ShoulderCamManager : MonoBehaviour
         finalLens.FieldOfView = targetFOV;
         cinemachineCamera.Lens = finalLens;
     }
+
+    // ─────────────────────────────────────────────
+    // Old FOV Fallbacks
+    // ─────────────────────────────────────────────
 
     #region Old FOV Methods Fallbacks
     private void IncreaseFOVTo(float targetFOV)
@@ -165,6 +213,10 @@ public class ShoulderCamManager : MonoBehaviour
         }
     }
     #endregion
+
+    // ─────────────────────────────────────────────
+    // Orbit
+    // ─────────────────────────────────────────────
 
     #region Orbit Methods
     private void StartOrbitSequence()

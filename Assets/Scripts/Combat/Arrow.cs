@@ -27,6 +27,9 @@ public class Arrow : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
 
+        // ÇÖZÜM 3 (FÝZÝK): Okun yüksek hýzda duvarlarýn/zeminin içinden geçmesini engeller.
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
         if (interactableComponent != null)
         {
             interactableComponent.enabled = false;
@@ -64,14 +67,15 @@ public class Arrow : MonoBehaviour
     {
         isStuck = true;
 
-        // ÇÖZÜM 4: Konsoldaki sarý uyarýnýn sebebi burasýydý. 
-        // ÖNCE hýzlar sýfýrlanmalý, SONRA isKinematic true yapýlmalý!
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
 
-        transform.position += transform.forward * stickDepth;
         col.enabled = false;
+
+        ContactPoint contact = collision.GetContact(0);
+        transform.position = contact.point + (transform.forward * stickDepth);
+
         transform.SetParent(collision.transform);
 
         if (interactableComponent != null)

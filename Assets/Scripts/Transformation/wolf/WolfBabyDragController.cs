@@ -17,6 +17,9 @@ public class WolfBabyDragController : MonoBehaviour
     private bool isDragging = false;
     private BabyState currentBabyState = BabyState.Dropped;
 
+    // ÇÖZÜM 1: Oyuncuya rehberlik edecek Hint için kontrol deðiþkeni
+    private bool hasShownDragHint = false;
+
     private void OnEnable()
     {
         GameEvents.OnFormChanged += UpdateForm;
@@ -65,6 +68,13 @@ public class WolfBabyDragController : MonoBehaviour
             }
         }
 
+        // Ýlk defa çekiyorsa Hint göster
+        if (!hasShownDragHint)
+        {
+            GameEvents.OnShowHint("Puseti [S] tuþuna basýlý tutup MOUSE ile yönlendirerek çekebilirsin.", 5f);
+            hasShownDragHint = true;
+        }
+
         GameEvents.OnTryDragRequested(mouthMountPoint);
         isDragging = true;
         GameEvents.OnWolfDragStateChanged(true);
@@ -77,6 +87,7 @@ public class WolfBabyDragController : MonoBehaviour
         isDragging = false;
         GameEvents.OnWolfDragStateChanged(false);
 
-        GameEvents.OnTryDropRequested(transform.position);
+        // ÇÖZÜM 2: Ayaklara deðil, tam olarak aðzýmýzýn (puseti tuttuðumuz yerin) koordinatýna býrak!
+        GameEvents.OnTryDropRequested(mouthMountPoint.position);
     }
 }

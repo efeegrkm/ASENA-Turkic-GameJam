@@ -13,7 +13,6 @@ public class CharacterMovementManager : MonoBehaviour
 
     [Header("Player Movement Rotation")]
     [SerializeField] private float moveSpeed = 7f;
-    // ÇÖZÜM: Dönüş hızlarını formlara göre ayırıyoruz
     [Tooltip("İnsan formunun kendi ekseninde dönme çevikliği")]
     [SerializeField] private float humanRotationSpeed = 10f;
     [Tooltip("Kurt formunun kendi ekseninde dönme hantallığı (Düşük DPI hissiyatı)")]
@@ -42,8 +41,11 @@ public class CharacterMovementManager : MonoBehaviour
     private float speedMultiplier = 1.0f;
     private bool isDraggingBaby = false;
 
-    // Çalışma anında aktif olan dönüş hızını tutacak değişken
     private float currentRotationSpeed;
+
+    // ÇÖZÜM: Oyun başındaki kusursuz insan boyutlarını hafızaya almak için
+    private float defaultHumanHeight;
+    private Vector3 defaultHumanCenter;
 
     private void Awake()
     {
@@ -51,8 +53,6 @@ public class CharacterMovementManager : MonoBehaviour
         SetCharacterController();
 
         hasCharacterController = characterController != null;
-
-        // Oyun başında insan formunun hızıyla başla
         currentRotationSpeed = humanRotationSpeed;
 
         playerInput = new();
@@ -69,8 +69,10 @@ public class CharacterMovementManager : MonoBehaviour
         if (TryGetComponent<CharacterController>(out CharacterController cc))
         {
             this.characterController = cc;
-            characterController.center = new(characterController.center.x, characterHeight / 2, characterController.center.z);
-            characterController.height = characterHeight;
+
+            // ÇÖZÜM: Inspector'da ayarladığın orijinal insan değerlerini kaydet
+            defaultHumanHeight = cc.height;
+            defaultHumanCenter = cc.center;
         }
     }
 
@@ -108,8 +110,6 @@ public class CharacterMovementManager : MonoBehaviour
     private void ChangeForm(bool isWolf)
     {
         UnlockMovement(isWolf);
-
-        // ÇÖZÜM: Form değiştiği an fare (dönüş) hassasiyetini güncelle!
         currentRotationSpeed = isWolf ? wolfRotationSpeed : humanRotationSpeed;
 
         if (hasCharacterController)
@@ -117,17 +117,17 @@ public class CharacterMovementManager : MonoBehaviour
             if (isWolf)
             {
                 characterController.height = wolfHeight;
-                characterController.center = new(characterController.center.x, wolfHeight / 2, characterController.center.z);
-                characterController.center += formOffset;
+                characterController.center = new Vector3(defaultHumanCenter.x, wolfHeight / 2f, defaultHumanCenter.z) + formOffset;
             }
             else
             {
-                characterController.height = characterHeight;
-                characterController.center = new(characterController.center.x, characterHeight / 2, characterController.center.z);
-                characterController.center -= formOffset;
+                // ÇÖZÜM: Hesaplama yapma, direkt hafızadaki hatasız ayarlara geri dön!
+                characterController.height = defaultHumanHeight;
+                characterController.center = defaultHumanCenter;
             }
         }
     }
+
     private void UnlockMovement() => isMovementLocked = false;
 
     private void HandleDragSpeed(bool isDragging)
@@ -154,7 +154,8 @@ public class CharacterMovementManager : MonoBehaviour
 
         if (isDraggingBaby)
         {
-            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f); // W (İleri) iptal, sadece S, A, D çalışır
+            yMoveInput = Mathf.Clamp(yMoveInput, -1f, 0f);
+            xMoveInput = 0f;
         }
 
         Vector3 camForward = activeCamera.transform.forward;
@@ -165,7 +166,6 @@ public class CharacterMovementManager : MonoBehaviour
         camRight.Normalize();
 
         Vector3 movementDir = (camForward * yMoveInput) + (camRight * xMoveInput);
-
         float currentSpeed = isAiming ? aimMoveSpeed : moveSpeed;
 
         if (movementDir != Vector3.zero)
@@ -181,7 +181,6 @@ public class CharacterMovementManager : MonoBehaviour
             GameEvents.OnStoppedMoving();
         }
 
-        // ROTASYON YÖNETİMİ (Sabit rotationSpeed yerine artık dinamik olan currentRotationSpeed devrede)
         if (isDraggingBaby)
         {
             if (camForward != Vector3.zero)

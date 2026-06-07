@@ -8117,7 +8117,7 @@ MonoBehaviour:
   walkSpeed: 4
   takeBabyDistance: 3.5
   punchInterval: 6
-  punchAnimDuration: 1.8
+  punchAnimDuration: 2.5
   takeBabyAnimDuration: 4
   handMountPoint: {fileID: 3011201981073419149}
 --- !u!136 &2915534560505950678

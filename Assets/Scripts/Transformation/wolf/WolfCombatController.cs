@@ -12,6 +12,8 @@ public class WolfCombatController : MonoBehaviour
     [SerializeField] private LayerMask enemyLayer;
 
     [Header("Dash (Atýlma) Settings")]
+    [Tooltip("Karakterin atýlmadan önce güç toplama (gerinme) süresi")]
+    [SerializeField] private float dashWindUpDuration = 0.6f;
     [SerializeField] private float dashForce = 15f;
     [SerializeField] private float dashDuration = 0.4f;
     [SerializeField] private float dashAoERadius = 4f;
@@ -32,7 +34,6 @@ public class WolfCombatController : MonoBehaviour
 
     private void OnEnable()
     {
-        // HATA 1 ÇÖZÜMÜ: Script (Kurt Modeli) her açýldýðýnda kilidi ZORLA temizle!
         isActionLocked = false;
 
         GameEvents.OnFormChanged += UpdateForm;
@@ -56,8 +57,6 @@ public class WolfCombatController : MonoBehaviour
 
     private void UpdateForm(bool wolfState) => isWolf = wolfState;
     private void LockActionsTemporarily(bool becomingWolf) => isActionLocked = true;
-
-    // NOT: Bozuk mantýk içeren Update fonksiyonu tamamen SÝLÝNDÝ.
 
     private void TryMeleeAttack(InputAction.CallbackContext context)
     {
@@ -97,9 +96,15 @@ public class WolfCombatController : MonoBehaviour
     {
         isActionLocked = true;
         lastDashTime = Time.time;
+
+        // 1. Eventleri ateþle (Animasyon ve hareket kilidi burada baþlar)
         GameEvents.OnWolfDashStarted();
         GameEvents.OnPlayOneShotSFX("WolfDash");
 
+        // 2. Fiziksel atýlma öncesi, animasyonun gerinmesi için bekle!
+        yield return new WaitForSeconds(dashWindUpDuration);
+
+        // 3. Fiziksel Atýlma Ýþlemi
         Vector3 dashDirection = transform.forward;
         float elapsed = 0f;
 
@@ -128,6 +133,7 @@ public class WolfCombatController : MonoBehaviour
             }
         }
 
+        // Hareketi serbest býrak
         GameEvents.OnWolfDashCompleted();
         isActionLocked = false;
     }

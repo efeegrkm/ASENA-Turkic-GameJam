@@ -29,12 +29,16 @@ public class BabyManager : MonoBehaviour
     private bool isCrying = false;
     private bool isTransitioning = false;
 
-    // HATA 3 ÇÖZÜMÜ: Bebeðin 3D modelinin merkezi (pivot) ile zemin arasýndaki mesafeyi tutacak
     private float meshPivotOffset = 0f;
+
+    // ÇÖZÜM: Modelin senin ayarladýðýn varsayýlan (Base) rotasyonunu hafýzada tutacak
+    private Vector3 baseEulerAngles;
 
     private void Start()
     {
-        // Oyun baþlar baþlamaz altýndaki zemine bir ýþýn atýp pivot hatasýný (gömülme payýný) hesaplýyoruz
+        // Oyun baþlar baþlamaz senin Inspector'da ayarladýðýn o kusursuz dönüþleri kaydet!
+        baseEulerAngles = transform.eulerAngles;
+
         if (Physics.Raycast(transform.position + Vector3.up * 1f, Vector3.down, out RaycastHit hit, 5f, groundLayer))
         {
             meshPivotOffset = transform.position.y - hit.point.y;
@@ -92,6 +96,9 @@ public class BabyManager : MonoBehaviour
         transform.SetParent(enemyHand);
         transform.localPosition = Vector3.zero;
 
+        // Yelbegen bebeði aldýðýnda bebeðin kendi doðal dik duruþuna (Base Rotasyona) dönmesi için
+        transform.localRotation = Quaternion.Euler(baseEulerAngles);
+
         currentState = BabyState.Stolen;
         GameEvents.OnBabyStateChanged(currentState);
     }
@@ -111,7 +118,9 @@ public class BabyManager : MonoBehaviour
 
         transform.SetParent(mountPoint);
         transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+
+        // ÇÖZÜM: 0'larý zorla atamak yerine, Base rotasyonun X'ine +90 ekliyoruz! Y ve Z kendi orijinal halinde kalýyor.
+        transform.localRotation = Quaternion.Euler(baseEulerAngles.x + 90f, baseEulerAngles.y, baseEulerAngles.z);
 
         currentState = BabyState.CarriedOnBack;
         GameEvents.OnBabyStateChanged(currentState);
@@ -122,6 +131,7 @@ public class BabyManager : MonoBehaviour
     {
         if (isTransitioning || currentState != BabyState.Dropped) return;
 
+        // "true" parametresi bebeðin world rotasyonunu ezdirmeyeceði için kurt çekerken base rotasyon zaten korunur
         transform.SetParent(mouthPoint, true);
 
         currentState = BabyState.CarriedInMouth;
@@ -136,7 +146,6 @@ public class BabyManager : MonoBehaviour
 
         if (Physics.Raycast(dropPosition + Vector3.up * 5f, Vector3.down, out RaycastHit hit, 20f, groundLayer))
         {
-            // HATA 3 ÇÖZÜMÜ: Zeminin yüksekliðine, bebeðin pivot payýný (gömülmemesi için gereken payý) ekliyoruz!
             finalDropPos.y = hit.point.y + meshPivotOffset;
         }
 
@@ -148,7 +157,9 @@ public class BabyManager : MonoBehaviour
         {
             transform.SetParent(null, true);
             transform.position = finalDropPos;
-            transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
+            // ÇÖZÜM: X ve Z eksenleri tamamen base (varsayýlan) halinde kalýyor, sadece Y ekseni düþtüðü açýda býrakýlýyor
+            transform.rotation = Quaternion.Euler(baseEulerAngles.x, transform.eulerAngles.y, baseEulerAngles.z);
 
             currentState = BabyState.Dropped;
             GameEvents.OnBabyStateChanged(currentState);
@@ -164,7 +175,9 @@ public class BabyManager : MonoBehaviour
 
         transform.SetParent(null);
         transform.position = dropPosition;
-        transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
+        // ÇÖZÜM: Sýrtýndan indiðinde yine kendi base rotasyonuna kavuþuyor
+        transform.rotation = Quaternion.Euler(baseEulerAngles.x, transform.eulerAngles.y, baseEulerAngles.z);
 
         currentState = BabyState.Dropped;
         GameEvents.OnBabyStateChanged(currentState);
